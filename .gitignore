@@ -59,3 +59,5 @@ htmlcov/
 artifacts/
 changelog.md
 deploy-package/
+.next/
+build/
