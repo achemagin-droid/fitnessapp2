@@ -46,5 +46,16 @@ nginx/ssl/*.key
 # Coverage
 .coverage
 htmlcov/
+
+# GitHub Actions
+.act/
+
+# Docker build cache
+.docker-cache/
+
+# Temporary release files
+artifacts/
+changelog.md
+deploy-package/
 .next/
 build/

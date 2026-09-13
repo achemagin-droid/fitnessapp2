@@ -5,6 +5,12 @@
 
 ![Stack](https://img.shields.io/badge/FastAPI-Python-blue) ![Stack](https://img.shields.io/badge/React-18-61DAFB) ![Stack](https://img.shields.io/badge/Tailwind-4-06B6D4) ![Stack](https://img.shields.io/badge/PostgreSQL-16-336791) ![Stack](https://img.shields.io/badge/Docker-Ready-2496ED)
 
+<!-- Замените <owner>/<repo> на ваш GitHub-репозиторий -->
+[![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/ci.yml)
+[![Release](https://github.com/<owner>/<repo>/actions/workflows/release.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/release.yml)
+[![Docker](https://img.shields.io/badge/ghcr.io-images-2496ED)](https://github.com/<owner>/<repo>/pkgs)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+
 ---
 
 ## 📋 Содержание
@@ -19,6 +25,8 @@
 - [Уведомления](#-уведомления)
 - [iFrame-виджет](#-iframe-виджет)
 - [Переменные окружения](#-переменные-окружения)
+- [CI/CD (GitHub Actions)](#-cicd-github-actions)
+- [Makefile](#-makefile)
 - [Troubleshooting](#-troubleshooting)
 
 ---
@@ -679,6 +687,201 @@ window.addEventListener('message', (event) => {
 | `SMTP_USER` | | Логин SMTP | `noreply@life.ru` |
 | `SMTP_PASSWORD` | | Пароль SMTP | `***` |
 | `REDIS_URL` | | URL Redis | `redis://redis:6379/0` |
+
+---
+
+## 🤖 CI/CD (GitHub Actions)
+
+### Обзор workflow
+
+Проект использует два GitHub Actions workflow:
+
+| Workflow | Файл | Триггер | Назначение |
+|----------|------|---------|------------|
+| **CI** | `.github/workflows/ci.yml` | `pull_request`, `push` в `main` | Линт, тесты, проверка сборки |
+| **Release** | `.github/workflows/release.yml` | `push` тега `v*`, `release` | Сборка Docker, публикация артефактов |
+
+### CI Workflow (`.github/workflows/ci.yml`)
+
+Запускается при каждом PR и push в main:
+
+```
+┌─────────────────┐    ┌─────────────────┐
+│  Frontend       │    │  Backend        │
+│  (lint + build) │    │  (lint + tests) │
+└────────┬────────┘    └────────┬────────┘
+         │                      │
+         └──────────┬───────────┘
+                    │
+         ┌──────────▼──────────┐
+         │  Docker build check │  (только для PR)
+         └─────────────────────┘
+```
+
+**Jobs:**
+- `frontend` — `npm ci`, `tsc --noEmit`, `npm run build`, upload `dist/`
+- `backend` — `pip install`, `ruff check`, `mypy`, `pytest` (с PostgreSQL)
+- `docker` — проверка сборки образов (только в PR)
+
+### Release Workflow (`.github/workflows/release.yml`)
+
+Запускается при создании тега `v*` или публикации релиза:
+
+```
+┌──────────────┐
+│  meta        │  Определение версии
+└──────┬───────┘
+       │
+  ┌────┴────────────────────────┐
+  │                             │
+┌─▼──────────┐  ┌────────────┐  │
+│ build-     │  │ build-     │  │
+│ frontend   │  │ configs    │  │
+└─────┬──────┘  └─────┬──────┘  │
+      │               │         │
+      │    ┌──────────▼─────────▼──────┐
+      │    │  docker-backend           │
+      │    │  docker-frontend          │
+      │    │  docker-nginx             │
+      │    └──────────┬────────────────┘
+      │               │
+      └───────┬───────┘
+              │
+       ┌──────▼──────┐
+       │  release    │  GitHub Release + artifacts
+       └──────┬──────┘
+              │
+       ┌──────▼──────┐
+       │  summary    │  Итоговая сводка
+       └─────────────┘
+```
+
+**Результат:**
+
+1. **Docker-образы** публикуются в GitHub Container Registry:
+   ```
+   ghcr.io/<owner>/checklis-backend:<version>
+   ghcr.io/<owner>/checklis-frontend:<version>
+   ghcr.io/<owner>/checklis-nginx:<version>
+   ```
+
+2. **Артефакты** прикрепляются к GitHub Release:
+   - `checklis-frontend-<version>.tar.gz` — собранный frontend
+   - `checklis-deploy-<version>.tar.gz` — configs + docker-compose + SQL
+
+3. **Теги образов:**
+   - `latest` — для релизных тегов
+   - `1.2.3`, `1.2`, `1` — semver
+   - `sha-abc1234` — по commit SHA
+   - `main` — для push в main
+
+### Создание релиза
+
+```bash
+# 1. Обновить версию
+git tag -a v1.0.0 -m "Release 1.0.0"
+git push origin v1.0.0
+
+# 2. Или через GitHub UI:
+# Releases → Draft a new release → Choose a tag → Publish
+```
+
+### Альтернатива: ручной запуск
+
+В GitHub UI: **Actions → Release → Run workflow** → указать тег.
+
+### Секреты (не требуются для базовой работы)
+
+| Secret | Назначение |
+|--------|-----------|
+| `GITHUB_TOKEN` | Автоматически предоставляется GitHub |
+| `DOCKERHUB_TOKEN` | Опционально, для публикации в Docker Hub |
+| `DEPLOY_SSH_KEY` | Опционально, для автодеплоя на сервер |
+
+### Локальная проверка workflow
+
+```bash
+# Установить act (https://github.com/nektos/act)
+brew install act  # или curl https://raw.githubusercontent.com/nektos/act/master/install.sh | bash
+
+# Запустить CI локально
+act pull_request
+
+# Запустить только frontend job
+act -j frontend
+```
+
+---
+
+## 🛠 Makefile
+
+Для удобства работы с проектом создан `Makefile`. Основные команды:
+
+### Разработка
+
+```bash
+make help          # Показать все доступные команды
+make install       # Установить зависимости frontend
+make dev           # Запустить frontend в dev-режиме
+make build         # Собрать frontend
+make env-setup     # Создать .env из шаблона
+```
+
+### Docker Compose
+
+```bash
+make up            # Запустить все сервисы
+make up-dev        # Запустить только БД и Redis
+make down          # Остановить все сервисы
+make down-volumes  # Остановить и удалить volumes
+make logs          # Показать логи
+make logs-backend  # Логи backend
+make restart       # Перезапустить сервисы
+```
+
+### База данных
+
+```bash
+make db-init       # Инициализировать БД (init.sql)
+make db-migrate    # Применить миграции Alembic
+make db-seed       # Заполнить начальными данными
+make db-shell      # Открыть psql shell
+make db-reset      # Полный сброс и пересоздание БД
+```
+
+### Тестирование
+
+```bash
+make test          # Запустить все тесты
+make test-frontend # Тесты frontend
+make test-backend  # Тесты backend
+make lint          # Линтеры (tsc + ruff)
+make ci-check      # Полная проверка перед push
+```
+
+### Docker Build
+
+```bash
+make docker-build          # Собрать все образы
+make docker-build-backend  # Только backend
+make docker-build-frontend # Только frontend
+make docker-build-nginx    # Только nginx
+```
+
+### Релиз
+
+```bash
+make release VERSION=v1.0.0        # Создать тег и push
+make release-build VERSION=v1.0.0  # Собрать и запушить образы в GHCR
+```
+
+### Утилиты
+
+```bash
+make clean          # Очистить временные файлы
+make shell-backend  # Shell в backend-контейнере
+make status         # Статус сервисов + URL
+```
 
 ---
 

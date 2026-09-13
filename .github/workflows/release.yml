@@ -1,0 +1,364 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"  # v1.0.0, v1.2.3-beta.1 и т.д.
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g., v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+  attestations: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/checklis
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ============================================
+  # Определение версии
+  # ============================================
+  meta:
+    name: Determine version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_release: ${{ steps.version.outputs.is_release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            IS_RELEASE="true"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            IS_RELEASE="true"
+          elif [[ -n "${{ inputs.tag }}" ]]; then
+            VERSION="${{ inputs.tag }}"
+            IS_RELEASE="true"
+          else
+            # Для push в main — используем sha
+            VERSION="dev-$(git rev-parse --short HEAD)"
+            IS_RELEASE="false"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION (release: $IS_RELEASE)"
+
+  # ============================================
+  # Сборка фронтенда (артефакт dist/)
+  # ============================================
+  build-frontend:
+    name: Build frontend artifact
+    runs-on: ubuntu-latest
+    needs: [meta]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ needs.meta.outputs.version }}
+
+      - name: Create tarball
+        run: |
+          tar -czf checklis-frontend-${{ needs.meta.outputs.version }}.tar.gz -C dist .
+          ls -lh checklis-frontend-${{ needs.meta.outputs.version }}.tar.gz
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist-${{ needs.meta.outputs.version }}
+          path: checklis-frontend-${{ needs.meta.outputs.version }}.tar.gz
+          retention-days: 90
+
+  # ============================================
+  # Сборка SQL-скрипта и конфигов (артефакт)
+  # ============================================
+  build-configs:
+    name: Build configs artifact
+    runs-on: ubuntu-latest
+    needs: [meta]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy-package
+          cp docker-compose.yml deploy-package/
+          cp .env.example deploy-package/
+          cp Dockerfile.frontend deploy-package/
+          cp -r nginx deploy-package/
+          cp -r backend/init.sql deploy-package/ 2>/dev/null || true
+          cp README.md deploy-package/
+          tar -czf checklis-deploy-${{ needs.meta.outputs.version }}.tar.gz -C deploy-package .
+          ls -lh checklis-deploy-${{ needs.meta.outputs.version }}.tar.gz
+
+      - name: Upload configs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-configs-${{ needs.meta.outputs.version }}
+          path: checklis-deploy-${{ needs.meta.outputs.version }}.tar.gz
+          retention-days: 90
+
+  # ============================================
+  # Docker: Backend
+  # ============================================
+  docker-backend:
+    name: Build & push backend image
+    runs-on: ubuntu-latest
+    needs: [meta]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ needs.meta.outputs.is_release == 'true' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            APP_VERSION=${{ needs.meta.outputs.version }}
+
+  # ============================================
+  # Docker: Frontend
+  # ============================================
+  docker-frontend:
+    name: Build & push frontend image
+    runs-on: ubuntu-latest
+    needs: [meta, build-frontend]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ needs.meta.outputs.is_release == 'true' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            APP_VERSION=${{ needs.meta.outputs.version }}
+
+  # ============================================
+  # Docker: Nginx
+  # ============================================
+  docker-nginx:
+    name: Build & push nginx image
+    runs-on: ubuntu-latest
+    needs: [meta]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-nginx
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ needs.meta.outputs.is_release == 'true' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          file: ./nginx/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # GitHub Release (только для тегов v*)
+  # ============================================
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - meta
+      - build-frontend
+      - build-configs
+      - docker-backend
+      - docker-frontend
+      - docker-nginx
+    if: needs.meta.outputs.is_release == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -lah artifacts/
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Получаем список коммитов с последнего тега
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            echo "## Что нового" > changelog.md
+            echo "" >> changelog.md
+            git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> changelog.md
+          else
+            echo "## Первый релиз 🎉" > changelog.md
+          fi
+          cat changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.meta.outputs.version }}
+          name: Release ${{ needs.meta.outputs.version }}
+          body_path: changelog.md
+          draft: false
+          prerelease: ${{ contains(needs.meta.outputs.version, '-') }}
+          files: |
+            artifacts/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================
+  # Summary
+  # ============================================
+  summary:
+    name: Release summary
+    runs-on: ubuntu-latest
+    needs: [meta, release, docker-backend, docker-frontend, docker-nginx]
+    if: always() && needs.meta.outputs.is_release == 'true'
+    steps:
+      - name: Summary
+        run: |
+          echo "## 📦 Release ${{ needs.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Docker images" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:${{ needs.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:${{ needs.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-nginx:${{ needs.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 Атрибуты релиза" >> $GITHUB_STEP_SUMMARY
+          echo "- \`checklis-frontend-${{ needs.meta.outputs.version }}.tar.gz\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`checklis-deploy-${{ needs.meta.outputs.version }}.tar.gz\`" >> $GITHUB_STEP_SUMMARY
