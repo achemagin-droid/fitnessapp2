@@ -1,5 +1,50 @@
+# Dependencies
 node_modules/
-.next/
+backend/venv/
+
+# Build output
 dist/
-build/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+backend/venv/
+
+# Docker
+docker-compose.override.yml
+
+# Logs
 *.log
+logs/
+
+# SSL certificates
+nginx/ssl/*.pem
+nginx/ssl/*.key
+
+# Database
+*.sqlite3
+
+# Coverage
+.coverage
+htmlcov/
+.next/
+build/
