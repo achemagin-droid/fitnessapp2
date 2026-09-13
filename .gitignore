@@ -4,6 +4,8 @@ backend/venv/
 
 # Build output
 dist/
+build/
+.next/
 
 # Environment
 .env
@@ -57,5 +59,3 @@ htmlcov/
 artifacts/
 changelog.md
 deploy-package/
-.next/
-build/
