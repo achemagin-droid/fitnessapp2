@@ -22,6 +22,7 @@ x-backend-env: &backend-env
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   SMTP_FROM: ${SMTP_FROM:-}
   REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+
 version: "3.9"
 
 services:
@@ -37,7 +38,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-checklis_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_/var/lib/postgresql/data
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -58,8 +58,6 @@ services:
     container_name: checklis-redis
     restart: unless-stopped
     command: redis-server --appendonly yes
-    volumes:
-      - redis_/data
     volumes:
       - redis_data:/data
     ports:
@@ -82,14 +80,11 @@ services:
     image: ${BACKEND_IMAGE:-checklis-backend:local}
     container_name: checklis-backend
     restart: unless-stopped
-    environment:
-      <<: *backend-env
-    container_name: checklis-backend
-    restart: unless-stopped
     env_file: .env
     environment:
-      - POSTGRES_HOST=db
-      - REDIS_URL=redis://redis:6379/0
+      <<: *backend-env
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
@@ -105,10 +100,9 @@ services:
       --port 8000
       --reload
       --log-level info
+      --workers 4
     networks:
       - checklis-net
-      --workers 4
-      --log-level info
 
   # ============================================
   # Celery Worker — фоновые задачи (уведомления)
@@ -122,12 +116,8 @@ services:
     restart: unless-stopped
     environment:
       <<: *backend-env
-    container_name: checklis-celery-worker
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      - POSTGRES_HOST=db
-      - REDIS_URL=redis://redis:6379/0
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
@@ -139,9 +129,6 @@ services:
       --concurrency=2
     networks:
       - checklis-net
-      celery -A app.tasks worker
-      --loglevel=info
-      --concurrency=2
 
   # ============================================
   # Celery Beat — планировщик задач
@@ -155,12 +142,8 @@ services:
     restart: unless-stopped
     environment:
       <<: *backend-env
-    container_name: checklis-celery-beat
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      - POSTGRES_HOST=db
-      - REDIS_URL=redis://redis:6379/0
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
@@ -171,8 +154,6 @@ services:
       --loglevel=info
     networks:
       - checklis-net
-      celery -A app.tasks beat
-      --loglevel=info
 
   # ============================================
   # Frontend — статические файлы (собранный React)
@@ -203,19 +184,10 @@ services:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
     volumes:
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - frontend_dist:/usr/share/nginx/html:ro
-      - certbot_webroot:/var/www/certbot
-    image: nginx:alpine
-    container_name: checklis-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - frontend_dist:/usr/share/nginx/html:ro
+      - certbot_webroot:/var/www/certbot
     depends_on:
       - backend
       - frontend
@@ -228,9 +200,9 @@ services:
       - checklis-net
 
 volumes:
-  postgres_
+  postgres_data:
     driver: local
-  redis_
+  redis_data:
     driver: local
   frontend_dist:
     driver: local
@@ -240,11 +212,3 @@ volumes:
 networks:
   checklis-net:
     driver: bridge
-
-volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-  frontend_dist:
-    driver: local
