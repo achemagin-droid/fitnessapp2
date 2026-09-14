@@ -1,0 +1,7 @@
+# SSL Certificates Directory
+
+Place your SSL certificates here:
+- `fullchain.pem` - Full certificate chain
+- `privkey.pem` - Private key
+
+For production, use Let's Encrypt or your certificate provider.
