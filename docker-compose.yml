@@ -75,6 +75,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    pull_policy: build
     image: ${BACKEND_IMAGE:-checklis-backend:local}
     container_name: checklis-backend
     restart: unless-stopped
@@ -107,6 +108,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    pull_policy: build
     image: ${BACKEND_IMAGE:-checklis-backend:local}
     container_name: checklis-celery-worker
     restart: unless-stopped
@@ -133,6 +135,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    pull_policy: build
     image: ${BACKEND_IMAGE:-checklis-backend:local}
     container_name: checklis-celery-beat
     restart: unless-stopped
@@ -158,6 +161,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+    pull_policy: build
     image: ${FRONTEND_IMAGE:-checklis-frontend:local}
     container_name: checklis-frontend
     restart: unless-stopped
@@ -173,6 +177,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
+    pull_policy: build
     image: ${NGINX_IMAGE:-checklis-nginx:local}
     container_name: checklis-nginx
     restart: unless-stopped
