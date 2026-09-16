@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Bell, Sparkles } from 'lucide-react';
+import { Calendar, Users, Bell, Settings, Sparkles } from 'lucide-react';
 import ScheduleBoard from './ScheduleBoard';
 import ClientCRM from './ClientCRM';
 import NotificationsPanel from './NotificationsPanel';
+import SettingsPanel from './SettingsPanel';
 
-type AdminTab = 'schedule' | 'crm' | 'notifications';
+type AdminTab = 'schedule' | 'crm' | 'notifications' | 'settings';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<AdminTab>('schedule');
@@ -13,6 +14,7 @@ export default function AdminPanel() {
     { id: 'schedule' as const, label: 'Расписание', icon: Calendar },
     { id: 'crm' as const, label: 'Клиенты', icon: Users },
     { id: 'notifications' as const, label: 'Уведомления', icon: Bell },
+    { id: 'settings' as const, label: 'Настройки', icon: Settings },
   ];
 
   return (
@@ -65,6 +67,7 @@ export default function AdminPanel() {
         {activeTab === 'schedule' && <ScheduleBoard />}
         {activeTab === 'crm' && <ClientCRM />}
         {activeTab === 'notifications' && <NotificationsPanel />}
+        {activeTab === 'settings' && <SettingsPanel />}
       </main>
     </div>
   );

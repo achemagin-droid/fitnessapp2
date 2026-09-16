@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
-import { classTypes, trainers } from '../../data/mockData';
 import { format, parseISO, setHours, setMinutes, addMinutes } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { X, Calendar, Clock, User, Tag } from 'lucide-react';
@@ -14,7 +13,7 @@ interface SessionFormModalProps {
 }
 
 export default function SessionFormModal({ isOpen, onClose, session, initialDate }: SessionFormModalProps) {
-  const { addSession, updateSession } = useStore();
+  const { addSession, updateSession, classTypes, trainers } = useStore();
   
   const [classTypeId, setClassTypeId] = useState(session?.class_type_id || '');
   const [trainerId, setTrainerId] = useState(session?.trainer_id || '');

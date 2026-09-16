@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { classTypes, trainers } from '../../data/mockData';
 import { format, parseISO, startOfWeek, addDays, isToday, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Users, Clock, Plus, Trash2, Edit2 } from 'lucide-react';
@@ -8,7 +7,7 @@ import SessionDetail from './SessionDetail';
 import SessionFormModal from './SessionFormModal';
 
 export default function ScheduleBoard() {
-  const { sessions, getSessionOccupancy, removeSession } = useStore();
+  const { sessions, getSessionOccupancy, removeSession, classTypes, trainers } = useStore();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);

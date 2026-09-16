@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { classTypes, sessions } from '../../data/mockData';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Search, Phone, CreditCard, History, Plus, User, AlertCircle } from 'lucide-react';
 import { BookingStatus } from '../../types';
 
 export default function ClientCRM() {
-  const { clients, findClientByPhone, getBookingsForClient, getAllPassesForClient, getActivePassForClient, addPass, sessions: allSessions } = useStore();
+  const { clients, findClientByPhone, getBookingsForClient, getAllPassesForClient, getActivePassForClient, addPass, sessions: allSessions, classTypes } = useStore();
   const [searchPhone, setSearchPhone] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showNewPass, setShowNewPass] = useState(false);

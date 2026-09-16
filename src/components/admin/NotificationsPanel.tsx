@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { classTypes } from '../../data/mockData';
 import { format, parseISO, isAfter, addHours, isBefore } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Bell, Send, CheckCircle2, AlertCircle, MessageCircle, Mail } from 'lucide-react';
@@ -16,7 +15,7 @@ interface NotificationItem {
 }
 
 export default function NotificationsPanel() {
-  const { sessions, bookings, clients, getBookingsForSession } = useStore();
+  const { sessions, bookings, clients, getBookingsForSession, classTypes } = useStore();
   const [sentNotifications, setSentNotifications] = useState<string[]>([]);
   const [sendingId, setSendingId] = useState<string | null>(null);
 

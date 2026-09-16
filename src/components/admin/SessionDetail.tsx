@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { classTypes, trainers } from '../../data/mockData';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ArrowLeft, UserCheck, UserX, XCircle, UserPlus, Clock, Users, CheckCircle2 } from 'lucide-react';
@@ -12,7 +11,7 @@ interface SessionDetailProps {
 }
 
 export default function SessionDetail({ sessionId, onBack }: SessionDetailProps) {
-  const { sessions, getBookingsForSession, updateBookingStatus, getClientById, getSessionOccupancy, addBooking, addClient } = useStore();
+  const { sessions, getBookingsForSession, updateBookingStatus, getClientById, getSessionOccupancy, addBooking, addClient, classTypes, trainers } = useStore();
   const [showWalkIn, setShowWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState('');
   const [walkInPhone, setWalkInPhone] = useState('');

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
-import { classTypes, trainers } from '../../data/mockData';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ArrowLeft, User, Phone, Mail, Send, CreditCard, AlertCircle } from 'lucide-react';
@@ -12,7 +11,7 @@ interface BookingFormProps {
 }
 
 export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFormProps) {
-  const { sessions, addBooking, findClientByPhone, addClient, getActivePassForClient } = useStore();
+  const { sessions, addBooking, findClientByPhone, addClient, getActivePassForClient, classTypes, trainers } = useStore();
   
   const session = sessions.find(s => s.id === sessionId);
   const classType = classTypes.find(ct => ct.id === session?.class_type_id);

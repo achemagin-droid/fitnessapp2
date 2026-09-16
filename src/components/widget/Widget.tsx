@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
-import { classTypes, trainers } from '../../data/mockData';
 import { format, isToday, isTomorrow, parseISO, startOfDay, addDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Calendar, Clock, Users, ChevronLeft, ChevronRight, Check, Sparkles } from 'lucide-react';
 import BookingForm from './BookingForm';
 
 export default function Widget() {
-  const { sessions, getSessionOccupancy } = useStore();
+  const { sessions, getSessionOccupancy, classTypes, trainers } = useStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);

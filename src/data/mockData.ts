@@ -1,13 +1,13 @@
 import { Trainer, ClassType, ClassSession, Client, Booking, Pass } from '../types';
 import { addHours, addDays, startOfWeek, setHours, setMinutes } from 'date-fns';
 
-export const trainers: Trainer[] = [
+export const initialTrainers: Trainer[] = [
   { id: 't1', name: 'Марта', description: 'Йога, Пилатес, Растяжка', is_active: true },
   { id: 't2', name: 'Алексей', description: 'Силовые тренировки, Кроссфит', is_active: true },
   { id: 't3', name: 'Елена', description: 'Танцы, Zumba, Stretching', is_active: true },
 ];
 
-export const classTypes: ClassType[] = [
+export const initialClassTypes: ClassType[] = [
   { id: 'ct1', name: 'Йога', description: 'Хатха-йога для всех уровней', duration_minutes: 60, max_capacity: 12, color_code: '#10B981' },
   { id: 'ct2', name: 'Пилатес', description: 'Укрепление мышечного корсета', duration_minutes: 55, max_capacity: 10, color_code: '#8B5CF6' },
   { id: 'ct3', name: 'Силовая', description: 'Тренировка с весом', duration_minutes: 60, max_capacity: 8, color_code: '#F59E0B' },
@@ -53,7 +53,7 @@ function generateSessions(): ClassSession[] {
     for (const item of schedule) {
       const date = addDays(weekStart, item.day + weekOffset * 7);
       const startTime = setMinutes(setHours(date, item.hour), 0);
-      const classType = classTypes.find(ct => ct.id === item.classTypeId)!;
+      const classType = initialClassTypes.find(ct => ct.id === item.classTypeId)!;
       const endTime = addHours(startTime, classType.duration_minutes / 60);
       
       sessions.push({
