@@ -1,10 +1,11 @@
 """Сервис для работы с абонементами (FIFO-списание)."""
 from datetime import date
 from uuid import UUID
-from sqlalchemy.orm import Session
-from sqlalchemy import select
 
-from app.models.models import Pass, Client
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.models import Pass
 
 
 def get_active_pass(client_id: UUID, db: Session) -> Pass | None:

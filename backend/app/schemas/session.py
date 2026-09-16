@@ -1,8 +1,8 @@
 """Pydantic-схемы для занятий."""
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
 from uuid import UUID
+
+from pydantic import BaseModel
 
 
 class SessionResponse(BaseModel):
@@ -21,21 +21,21 @@ class SessionResponse(BaseModel):
 
 
 class SessionListResponse(BaseModel):
-    sessions: List[SessionResponse]
+    sessions: list[SessionResponse]
 
 
 class BookingCreate(BaseModel):
     client_phone: str
     client_first_name: str
-    client_last_name: Optional[str] = None
+    client_last_name: str | None = None
     session_id: UUID
     notification_preference: str = "none"
-    telegram_id: Optional[str] = None
-    email: Optional[str] = None
+    telegram_id: str | None = None
+    email: str | None = None
 
 
 class BookingResponse(BaseModel):
     booking_id: UUID
     status: str
     session: dict
-    pass_info: Optional[dict] = None
+    pass_info: dict | None = None

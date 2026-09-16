@@ -1,6 +1,5 @@
 """Конфигурация приложения из переменных окружения."""
 from pydantic_settings import BaseSettings
-from typing import List
 
 
 class Settings(BaseSettings):
@@ -21,7 +20,8 @@ class Settings(BaseSettings):
 
     # App
     secret_key: str = "change-me"
-    cors_origins: List[str] = ["http://localhost:5173"]
+    # Comma-separated to support Docker Compose environment variables.
+    cors_origins: str = "http://localhost,http://localhost:3000,http://localhost:5173"
     admin_password: str = "admin"
 
     # Telegram

@@ -1,18 +1,16 @@
 """Админские эндпоинты."""
-from fastapi import APIRouter, Depends, HTTPException, Header
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 from datetime import datetime, timedelta
 from uuid import UUID
-from typing import Optional
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
-from app.models.models import (
-    ClassSession, Booking, Client, Pass, ClassType, Trainer
-)
+from app.core.database import get_db
+from app.models.models import Booking, ClassSession, Client
 from app.services.booking_service import update_booking_status
-from app.services.pass_service import create_pass, get_active_pass
+from app.services.pass_service import create_pass
 
 router = APIRouter()
 
@@ -140,7 +138,7 @@ async def add_walkin(
 
 @router.get("/clients")
 async def search_clients(
-    phone: Optional[str] = None,
+    phone: str | None = None,
     db: Session = Depends(get_db),
     _=Depends(verify_admin)
 ):

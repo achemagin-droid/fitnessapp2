@@ -1,13 +1,12 @@
 """Сервис для работы с записями (защита от race conditions)."""
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
 from fastapi import HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
 
-from app.models.models import ClassSession, Booking, Client
-from app.services.pass_service import get_active_pass
-
+from app.models.models import Booking, ClassSession
 
 # ID статусов
 STATUS_CONFIRMED = 1

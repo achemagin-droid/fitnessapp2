@@ -1,13 +1,12 @@
 """Эндпоинты для работы с записями."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from app.core.database import get_db
-from app.schemas.session import BookingCreate, BookingResponse
+from app.models.models import ClassSession, Client
+from app.schemas.session import BookingCreate
 from app.services.booking_service import create_booking
 from app.services.pass_service import get_active_pass
-from app.models.models import Client, ClassSession
 
 router = APIRouter()
 
