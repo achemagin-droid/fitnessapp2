@@ -11,7 +11,7 @@ interface BookingFormProps {
 }
 
 export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFormProps) {
-  const { sessions, addBooking, findClientByPhone, addClient, getActivePassForClient, classTypes, trainers } = useStore();
+  const { sessions, addBooking, findClientByPhone, addClient, getActivePassForClient, isClientBookedForSession, classTypes, trainers } = useStore();
   
   const session = sessions.find(s => s.id === sessionId);
   const classType = classTypes.find(ct => ct.id === session?.class_type_id);
@@ -83,6 +83,13 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
         };
         addClient(newClient);
         clientId = newClient.id;
+      }
+
+      // Проверка на дубликаты
+      if (isClientBookedForSession(clientId, sessionId)) {
+        setError('Вы уже записаны на эту тренировку');
+        setIsSubmitting(false);
+        return;
       }
 
       const booking = {

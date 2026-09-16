@@ -11,7 +11,7 @@ interface SessionDetailProps {
 }
 
 export default function SessionDetail({ sessionId, onBack }: SessionDetailProps) {
-  const { sessions, getBookingsForSession, updateBookingStatus, removeBooking, getClientById, getSessionOccupancy, addBooking, addClient, classTypes, trainers } = useStore();
+  const { sessions, getBookingsForSession, updateBookingStatus, removeBooking, getClientById, getSessionOccupancy, addBooking, addClient, isClientBookedForSession, classTypes, trainers } = useStore();
   const [showWalkIn, setShowWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState('');
   const [walkInPhone, setWalkInPhone] = useState('');
@@ -46,6 +46,12 @@ export default function SessionDetail({ sessionId, onBack }: SessionDetailProps)
         notification_preference: 'none',
       };
       addClient(client);
+    }
+
+    // Проверка на дубликаты
+    if (isClientBookedForSession(client.id, sessionId)) {
+      alert('Этот клиент уже записан на данную тренировку');
+      return;
     }
 
     const booking = {

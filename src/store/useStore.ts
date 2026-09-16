@@ -21,6 +21,7 @@ interface AppState {
   getBookingsForSession: (sessionId: string) => Booking[];
   getBookingsForClient: (clientId: string) => Booking[];
   getSessionOccupancy: (sessionId: string) => number;
+  isClientBookedForSession: (clientId: string, sessionId: string) => boolean;
   
   addPass: (pass: Pass) => void;
   getActivePassForClient: (clientId: string) => Pass | undefined;
@@ -90,6 +91,14 @@ export const useStore = create<AppState>()(
       getBookingsForClient: (clientId) => get().bookings.filter(b => b.client_id === clientId),
       
       getSessionOccupancy: (sessionId) => get().bookings.filter(b => b.session_id === sessionId && !['cancelled_client', 'cancelled_admin'].includes(b.status)).length,
+      
+      isClientBookedForSession: (clientId, sessionId) => {
+        return get().bookings.some(b => 
+          b.client_id === clientId && 
+          b.session_id === sessionId && 
+          !['cancelled_client', 'cancelled_admin'].includes(b.status)
+        );
+      },
       
       addPass: (pass) => set((state) => ({ passes: [...state.passes, pass] })),
       
