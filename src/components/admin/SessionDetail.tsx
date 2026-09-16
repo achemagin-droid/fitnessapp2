@@ -45,14 +45,27 @@ export default function SessionDetail({ sessionId, onBack }: SessionDetailProps)
   const handleWalkIn = () => {
     if (!walkInName.trim() || !walkInPhone.trim()) return;
     
-    let client = useStore.getState().findClientByPhone(walkInPhone.trim());
+    const normalizedPhone = walkInPhone.trim().replace(/\s+/g, '');
+    
+    // Валидация телефона
+    if (!normalizedPhone.startsWith('+7')) {
+      alert('Номер телефона должен начинаться с +7');
+      return;
+    }
+    
+    if (normalizedPhone.length < 12) {
+      alert('Номер телефона должен содержать 12 символов (+7XXXXXXXXXX)');
+      return;
+    }
+    
+    let client = useStore.getState().findClientByPhone(normalizedPhone);
     if (!client) {
       const nameParts = walkInName.trim().split(' ');
       client = {
         id: `c${Date.now()}`,
         first_name: nameParts[0],
         last_name: nameParts.slice(1).join(' ') || '',
-        phone: walkInPhone.trim(),
+        phone: normalizedPhone,
         notification_preference: 'none',
       };
       addClient(client);
@@ -159,7 +172,7 @@ export default function SessionDetail({ sessionId, onBack }: SessionDetailProps)
               type="tel"
               value={walkInPhone}
               onChange={(e) => setWalkInPhone(e.target.value)}
-              placeholder="Телефон"
+              placeholder="+79991234567"
               className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
             />
             <div className="flex gap-2">

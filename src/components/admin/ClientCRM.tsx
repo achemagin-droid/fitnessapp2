@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Search, Phone, CreditCard, History, Plus, User, AlertCircle } from 'lucide-react';
+import { Search, Phone, CreditCard, History, Plus, User, AlertCircle, Users } from 'lucide-react';
 import { BookingStatus } from '../../types';
 
 export default function ClientCRM() {
@@ -12,6 +12,7 @@ export default function ClientCRM() {
   const [showNewPass, setShowNewPass] = useState(false);
   const [newPassVisits, setNewPassVisits] = useState(10);
   const [newPassDays, setNewPassDays] = useState(30);
+  const [showAllClients, setShowAllClients] = useState(false);
 
   const foundClient = useMemo(() => {
     if (searchPhone.length >= 11) {
@@ -86,6 +87,62 @@ export default function ClientCRM() {
           </button>
         )}
       </div>
+
+      {/* Кнопка показать всех клиентов */}
+      <button
+        onClick={() => setShowAllClients(!showAllClients)}
+        className="w-full mb-6 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+      >
+        <Users className="w-4 h-4" />
+        {showAllClients ? 'Скрыть список клиентов' : `Показать всех клиентов (${clients.length})`}
+      </button>
+
+      {/* Список всех клиентов */}
+      {showAllClients && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mb-6 animate-fade-in">
+          <h3 className="font-semibold text-gray-900 mb-4">Все клиенты</h3>
+          {clients.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">Нет клиентов</p>
+          ) : (
+            <div className="space-y-2">
+              {clients.map((client) => {
+                const activePass = getActivePassForClient(client.id);
+                return (
+                  <button
+                    key={client.id}
+                    onClick={() => {
+                      setSelectedClientId(client.id);
+                      setShowAllClients(false);
+                    }}
+                    className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {client.first_name} {client.last_name}
+                        </p>
+                        <p className="text-sm text-gray-500">{client.phone}</p>
+                      </div>
+                      <div className="text-right">
+                        {activePass ? (
+                          <div>
+                            <p className="text-sm font-semibold text-green-700">
+                              {activePass.remaining_visits}/{activePass.total_visits}
+                            </p>
+                            <p className="text-xs text-gray-500">посещений</p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400">Нет абонемента</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {client && (
         <div className="space-y-4">

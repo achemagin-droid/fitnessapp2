@@ -29,8 +29,9 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (phone.length >= 11) {
-      const client = findClientByPhone(phone);
+    const normalizedPhone = phone.trim().replace(/\s+/g, '');
+    if (normalizedPhone.startsWith('+7') && normalizedPhone.length >= 12) {
+      const client = findClientByPhone(normalizedPhone);
       if (client) {
         setFirstName(client.first_name);
         setLastName(client.last_name);
@@ -44,6 +45,9 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
         setExistingClientId(null);
         setActivePass(null);
       }
+    } else {
+      setExistingClientId(null);
+      setActivePass(null);
     }
   }, [phone]);
 
@@ -53,6 +57,18 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
     
     if (!firstName.trim() || !phone.trim()) {
       setError('Заполните имя и телефон');
+      return;
+    }
+
+    // Валидация телефона - должен начинаться с +7
+    const normalizedPhone = phone.trim().replace(/\s+/g, '');
+    if (!normalizedPhone.startsWith('+7')) {
+      setError('Номер телефона должен начинаться с +7');
+      return;
+    }
+
+    if (normalizedPhone.length < 12) {
+      setError('Номер телефона должен содержать 12 символов (+7XXXXXXXXXX)');
       return;
     }
 
@@ -69,27 +85,29 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
     setIsSubmitting(true);
 
     setTimeout(() => {
-      let clientId = existingClientId;
+      // Проверка на дубликаты ДО создания клиента
+      const existingClient = findClientByPhone(normalizedPhone);
+      
+      if (existingClient && isClientBookedForSession(existingClient.id, sessionId)) {
+        setError('Вы уже записаны на эту тренировку');
+        setIsSubmitting(false);
+        return;
+      }
+
+      let clientId = existingClient?.id;
       
       if (!clientId) {
         const newClient = {
           id: `c${Date.now()}`,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          phone: phone.trim(),
+          phone: normalizedPhone,
           email: email.trim() || undefined,
           telegram_id: telegramId.trim() || undefined,
           notification_preference: notificationPref,
         };
         addClient(newClient);
         clientId = newClient.id;
-      }
-
-      // Проверка на дубликаты
-      if (isClientBookedForSession(clientId, sessionId)) {
-        setError('Вы уже записаны на эту тренировку');
-        setIsSubmitting(false);
-        return;
       }
 
       const booking = {
@@ -193,12 +211,15 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+7 (999) 123-45-67"
+                    placeholder="+79991234567"
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20 focus:border-[#E11D48] transition-all"
                   />
                 </div>
                 {existingClientId && (
                   <p className="text-xs text-green-600 mt-1">✓ Клиент найден</p>
+                )}
+                {phone.length > 0 && !phone.trim().replace(/\s+/g, '').startsWith('+7') && (
+                  <p className="text-xs text-red-600 mt-1">Номер должен начинаться с +7</p>
                 )}
               </div>
             </div>
