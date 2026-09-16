@@ -174,21 +174,23 @@ export default function SettingsPanel() {
 
         <div className="space-y-2">
           {trainers.map((trainer) => (
-            <div key={trainer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group">
+            <div key={trainer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium text-gray-900">{trainer.name}</p>
                 <p className="text-sm text-gray-500">{trainer.description}</p>
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1">
                 <button
                   onClick={() => handleEditTrainer(trainer)}
                   className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  title="Редактировать"
                 >
                   <Edit2 className="w-3 h-3" />
                 </button>
                 <button
                   onClick={() => handleDeleteTrainer(trainer.id)}
                   className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  title="Удалить"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -298,7 +300,7 @@ export default function SettingsPanel() {
 
         <div className="space-y-2">
           {classTypes.map((ct) => (
-            <div key={ct.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group">
+            <div key={ct.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <span className="w-4 h-4 rounded-full" style={{ backgroundColor: ct.color_code }} />
                 <div>
@@ -308,16 +310,18 @@ export default function SettingsPanel() {
                   </p>
                 </div>
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1">
                 <button
                   onClick={() => handleEditClassType(ct)}
                   className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  title="Редактировать"
                 >
                   <Edit2 className="w-3 h-3" />
                 </button>
                 <button
                   onClick={() => handleDeleteClassType(ct.id)}
                   className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  title="Удалить"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
