@@ -17,6 +17,7 @@ interface AppState {
   
   addBooking: (booking: Booking) => void;
   updateBookingStatus: (bookingId: string, status: BookingStatus) => void;
+  removeBooking: (bookingId: string) => void;
   getBookingsForSession: (sessionId: string) => Booking[];
   getBookingsForClient: (clientId: string) => Booking[];
   getSessionOccupancy: (sessionId: string) => number;
@@ -61,6 +62,10 @@ export const useStore = create<AppState>()(
       getClientById: (id) => get().clients.find(c => c.id === id),
       
       addBooking: (booking) => set((state) => ({ bookings: [...state.bookings, booking] })),
+      
+      removeBooking: (bookingId) => set((state) => ({
+        bookings: state.bookings.filter(b => b.id !== bookingId)
+      })),
       
       updateBookingStatus: (bookingId, status) => {
         const state = get();

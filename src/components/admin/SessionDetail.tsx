@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ArrowLeft, UserCheck, UserX, XCircle, UserPlus, Clock, Users, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, UserCheck, UserX, XCircle, UserPlus, Clock, Users, CheckCircle2, Trash2 } from 'lucide-react';
 import { BookingStatus } from '../../types';
 
 interface SessionDetailProps {
@@ -11,7 +11,7 @@ interface SessionDetailProps {
 }
 
 export default function SessionDetail({ sessionId, onBack }: SessionDetailProps) {
-  const { sessions, getBookingsForSession, updateBookingStatus, getClientById, getSessionOccupancy, addBooking, addClient, classTypes, trainers } = useStore();
+  const { sessions, getBookingsForSession, updateBookingStatus, removeBooking, getClientById, getSessionOccupancy, addBooking, addClient, classTypes, trainers } = useStore();
   const [showWalkIn, setShowWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState('');
   const [walkInPhone, setWalkInPhone] = useState('');
@@ -24,6 +24,12 @@ export default function SessionDetail({ sessionId, onBack }: SessionDetailProps)
 
   const handleStatusChange = (bookingId: string, status: BookingStatus) => {
     updateBookingStatus(bookingId, status);
+  };
+
+  const handleDeleteBooking = (bookingId: string) => {
+    if (confirm('Удалить эту запись?')) {
+      removeBooking(bookingId);
+    }
   };
 
   const handleWalkIn = () => {
@@ -214,6 +220,15 @@ export default function SessionDetail({ sessionId, onBack }: SessionDetailProps)
                     </button>
                   </div>
                 )}
+
+                {/* Кнопка удаления для всех статусов */}
+                <button
+                  onClick={() => handleDeleteBooking(booking.id)}
+                  className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Удалить запись
+                </button>
 
                 {(booking.status === 'completed' || booking.status === 'no_show') && (
                   <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-2">
