@@ -25,6 +25,11 @@ interface AppState {
   getAllPassesForClient: (clientId: string) => Pass[];
   
   getClassType: (classTypeId: string) => typeof classTypes[0] | undefined;
+  
+  // Session management
+  addSession: (session: ClassSession) => void;
+  updateSession: (sessionId: string, updates: Partial<ClassSession>) => void;
+  removeSession: (sessionId: string) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -95,6 +100,18 @@ export const useStore = create<AppState>()(
       getAllPassesForClient: (clientId) => get().passes.filter(p => p.client_id === clientId),
       
       getClassType: (classTypeId) => classTypes.find(ct => ct.id === classTypeId),
+      
+      // Session management
+      addSession: (session) => set((state) => ({ sessions: [...state.sessions, session] })),
+      
+      updateSession: (sessionId, updates) => set((state) => ({
+        sessions: state.sessions.map(s => s.id === sessionId ? { ...s, ...updates } : s)
+      })),
+      
+      removeSession: (sessionId) => set((state) => ({
+        sessions: state.sessions.filter(s => s.id !== sessionId),
+        bookings: state.bookings.filter(b => b.session_id !== sessionId)
+      })),
     }),
     {
       name: 'checklis-booking-storage',

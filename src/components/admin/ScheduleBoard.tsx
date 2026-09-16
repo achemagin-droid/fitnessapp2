@@ -3,13 +3,17 @@ import { useStore } from '../../store/useStore';
 import { classTypes, trainers } from '../../data/mockData';
 import { format, parseISO, startOfWeek, addDays, isToday, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Users, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Clock, Plus, Trash2, Edit2 } from 'lucide-react';
 import SessionDetail from './SessionDetail';
+import SessionFormModal from './SessionFormModal';
 
 export default function ScheduleBoard() {
-  const { sessions, getSessionOccupancy } = useStore();
+  const { sessions, getSessionOccupancy, removeSession } = useStore();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingSession, setEditingSession] = useState<any>(null);
+  const [selectedDateForCreate, setSelectedDateForCreate] = useState<Date | null>(null);
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -20,6 +24,25 @@ export default function ScheduleBoard() {
     return sessions
       .filter(s => isSameDay(parseISO(s.start_time), day) && s.is_active)
       .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime());
+  };
+
+  const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Удалить занятие? Все записи на это занятие также будут удалены.')) {
+      removeSession(sessionId);
+    }
+  };
+
+  const handleEditSession = (session: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSession(session);
+    setShowCreateModal(true);
+  };
+
+  const handleCreateSession = (day: Date, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedDateForCreate(day);
+    setShowCreateModal(true);
   };
 
   if (selectedSessionId) {
@@ -43,12 +66,24 @@ export default function ScheduleBoard() {
         <h2 className="text-lg font-bold text-gray-900">
           {format(weekDays[0], 'd MMMM', { locale: ru })} — {format(weekDays[6], 'd MMMM, yyyy', { locale: ru })}
         </h2>
-        <button
-          onClick={() => setWeekOffset(w => Math.min(w + 1, 4))}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setSelectedDateForCreate(null);
+              setShowCreateModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#E11D48] text-white rounded-lg text-sm font-medium hover:bg-[#BE123C] transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Создать</span>
+          </button>
+          <button
+            onClick={() => setWeekOffset(w => Math.min(w + 1, 4))}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
@@ -84,37 +119,56 @@ export default function ScheduleBoard() {
                     const percentage = maxCap > 0 ? (occupancy / maxCap) * 100 : 0;
 
                     return (
-                      <button
-                        key={session.id}
-                        onClick={() => setSelectedSessionId(session.id)}
-                        className="w-full text-left p-2 rounded-lg hover:bg-gray-50 transition-colors group"
-                      >
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: classType?.color_code }}
-                          />
-                          <span className="text-xs font-semibold text-gray-800 truncate">
-                            {classType?.name}
-                          </span>
+                      <div key={session.id} className="relative group">
+                        <button
+                          onClick={() => setSelectedSessionId(session.id)}
+                          className="w-full text-left p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: classType?.color_code }}
+                            />
+                            <span className="text-xs font-semibold text-gray-800 truncate">
+                              {classType?.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                            <Clock className="w-3 h-3" />
+                            {format(parseISO(session.start_time), 'HH:mm')}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-500 mb-1.5">
+                            <Users className="w-3 h-3" />
+                            {occupancy}/{maxCap}
+                          </div>
+                          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                percentage >= 90 ? 'bg-red-500' : percentage >= 60 ? 'bg-amber-500' : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
+                            />
+                          </div>
+                        </button>
+                        
+                        {/* Action buttons */}
+                        <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => handleEditSession(session, e)}
+                            className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                            title="Редактировать"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteSession(session.id, e)}
+                            className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                            title="Удалить"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                          <Clock className="w-3 h-3" />
-                          {format(parseISO(session.start_time), 'HH:mm')}
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-500 mb-1.5">
-                          <Users className="w-3 h-3" />
-                          {occupancy}/{maxCap}
-                        </div>
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              percentage >= 90 ? 'bg-red-500' : percentage >= 60 ? 'bg-amber-500' : 'bg-green-500'
-                            }`}
-                            style={{ width: `${Math.min(percentage, 100)}%` }}
-                          />
-                        </div>
-                      </button>
+                      </div>
                     );
                   })
                 )}
@@ -135,6 +189,18 @@ export default function ScheduleBoard() {
           <span className="w-3 h-3 rounded-full bg-red-500" /> Почти полно
         </span>
       </div>
+
+      {/* Session Form Modal */}
+      <SessionFormModal
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setEditingSession(null);
+          setSelectedDateForCreate(null);
+        }}
+        session={editingSession}
+        initialDate={selectedDateForCreate || undefined}
+      />
     </div>
   );
 }
