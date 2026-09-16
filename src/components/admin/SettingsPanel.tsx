@@ -10,6 +10,7 @@ export default function SettingsPanel() {
   const [editingClassType, setEditingClassType] = useState<ClassType | null>(null);
   const [showTrainerForm, setShowTrainerForm] = useState(false);
   const [showClassTypeForm, setShowClassTypeForm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{type: 'trainer' | 'classType', id: string} | null>(null);
   
   // Trainer form state
   const [trainerName, setTrainerName] = useState('');
@@ -100,15 +101,26 @@ export default function SettingsPanel() {
   };
 
   const handleDeleteTrainer = (id: string) => {
-    if (confirm('Удалить тренера?')) {
-      removeTrainer(id);
-    }
+    setDeleteConfirm({ type: 'trainer', id });
   };
 
   const handleDeleteClassType = (id: string) => {
-    if (confirm('Удалить тип занятия? Все связанные занятия также будут удалены.')) {
-      removeClassType(id);
+    setDeleteConfirm({ type: 'classType', id });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirm) return;
+    
+    if (deleteConfirm.type === 'trainer') {
+      removeTrainer(deleteConfirm.id);
+    } else {
+      removeClassType(deleteConfirm.id);
     }
+    setDeleteConfirm(null);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirm(null);
   };
 
   return (
@@ -181,6 +193,7 @@ export default function SettingsPanel() {
               </div>
               <div className="flex gap-1">
                 <button
+                  type="button"
                   onClick={() => handleEditTrainer(trainer)}
                   className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                   title="Редактировать"
@@ -188,6 +201,7 @@ export default function SettingsPanel() {
                   <Edit2 className="w-3 h-3" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDeleteTrainer(trainer.id)}
                   className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                   title="Удалить"
@@ -312,6 +326,7 @@ export default function SettingsPanel() {
               </div>
               <div className="flex gap-1">
                 <button
+                  type="button"
                   onClick={() => handleEditClassType(ct)}
                   className="p-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                   title="Редактировать"
@@ -319,6 +334,7 @@ export default function SettingsPanel() {
                   <Edit2 className="w-3 h-3" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDeleteClassType(ct.id)}
                   className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                   title="Удалить"
@@ -330,6 +346,36 @@ export default function SettingsPanel() {
           ))}
         </div>
       </div>
+
+      {/* Модальное окно подтверждения удаления */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">Подтверждение удаления</h3>
+            <p className="text-gray-600 mb-6">
+              {deleteConfirm.type === 'trainer' 
+                ? 'Вы уверены, что хотите удалить этого тренера?'
+                : 'Вы уверены, что хотите удалить этот тип занятия? Все связанные занятия также будут удалены.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                className="flex-1 py-2 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="flex-1 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
