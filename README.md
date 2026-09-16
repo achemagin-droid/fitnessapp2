@@ -46,7 +46,19 @@ cd checklis-booking
 
 ```bash
 cp .env.example .env
-# Отредактируйте .env и укажите ваши значения
+nano .env
+```
+
+**Обязательные переменные:**
+- `POSTGRES_PASSWORD` - пароль для PostgreSQL (обязательно!)
+- `SECRET_KEY` - секретный ключ для JWT (генерируется командой `openssl rand -hex 32`)
+
+**Пример .env:**
+```bash
+POSTGRES_DB=checklis
+POSTGRES_USER=checklis_user
+POSTGRES_PASSWORD=your_secure_password_here
+SECRET_KEY=your_random_secret_key_here
 ```
 
 ### 3. Запустить приложение
