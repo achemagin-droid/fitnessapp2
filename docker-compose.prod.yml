@@ -1,0 +1,73 @@
+# ============================================
+# Production overrides for docker-compose.yml
+# ============================================
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================
+
+services:
+  backend:
+    # В продакшене используем готовые образы из GHCR
+    # image: ghcr.io/your-org/checklis-backend:latest
+    restart: always
+    volumes: !reset []  # Убираем bind-mount для кода
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers 4
+      --log-level warning
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512M
+
+  celery-worker:
+    restart: always
+    command: >
+      celery -A app.tasks.notifications:celery_app worker
+      --loglevel=warning
+      --concurrency=4
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+  celery-beat:
+    restart: always
+    command: >
+      celery -A app.tasks.notifications:celery_app beat
+      --loglevel=warning
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  frontend:
+    restart: always
+
+  nginx:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  db:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  redis:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
