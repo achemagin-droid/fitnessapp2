@@ -3,6 +3,15 @@ import { persist } from 'zustand/middleware';
 import { Client, Booking, Pass, ClassSession, BookingStatus, Trainer, ClassType } from '../types';
 import { initialClients, initialBookings, initialPasses, sessions, initialClassTypes, initialTrainers } from '../data/mockData';
 
+interface NotificationSettings {
+  telegram_bot_token: string;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_user: string;
+  smtp_password: string;
+  smtp_from: string;
+}
+
 interface AppState {
   clients: Client[];
   bookings: Booking[];
@@ -10,6 +19,7 @@ interface AppState {
   sessions: ClassSession[];
   trainers: Trainer[];
   classTypes: ClassType[];
+  notificationSettings: NotificationSettings;
   
   addClient: (client: Client) => void;
   findClientByPhone: (phone: string) => Client | undefined;
@@ -44,6 +54,10 @@ interface AppState {
   addClassType: (classType: ClassType) => void;
   updateClassType: (classTypeId: string, updates: Partial<ClassType>) => void;
   removeClassType: (classTypeId: string) => void;
+  
+  // Notification settings
+  updateNotificationSettings: (settings: Partial<NotificationSettings>) => void;
+  getNotificationSettings: () => NotificationSettings;
 }
 
 export const useStore = create<AppState>()(
@@ -55,6 +69,14 @@ export const useStore = create<AppState>()(
       sessions: sessions,
       trainers: initialTrainers,
       classTypes: initialClassTypes,
+      notificationSettings: {
+        telegram_bot_token: '',
+        smtp_host: '',
+        smtp_port: 587,
+        smtp_user: '',
+        smtp_password: '',
+        smtp_from: '',
+      },
       
       addClient: (client) => set((state) => ({ clients: [...state.clients, client] })),
       
@@ -163,6 +185,13 @@ export const useStore = create<AppState>()(
         classTypes: state.classTypes.filter(ct => ct.id !== classTypeId),
         sessions: state.sessions.filter(s => s.class_type_id !== classTypeId)
       })),
+      
+      // Notification settings
+      updateNotificationSettings: (settings) => set((state) => ({
+        notificationSettings: { ...state.notificationSettings, ...settings }
+      })),
+      
+      getNotificationSettings: () => get().notificationSettings,
     }),
     {
       name: 'checklis-booking-storage',

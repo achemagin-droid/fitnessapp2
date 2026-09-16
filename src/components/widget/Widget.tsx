@@ -10,7 +10,7 @@ export default function Widget() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [clientInfo, setClientInfo] = useState<{ name: string; passInfo?: { remaining: number; total: number; endDate: string } } | null>(null);
+  const [clientInfo, setClientInfo] = useState<{ name: string; passInfo?: { remaining: number; total: number; endDate: string }; notificationsEnabled: boolean } | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
 
   const weekDays = useMemo(() => {
@@ -53,7 +53,12 @@ export default function Widget() {
           {clientInfo?.name && (
             <p className="text-gray-600 mb-2">{clientInfo.name}, ждём вас на тренировку!</p>
           )}
-          <p className="text-gray-600 mb-6">Напоминание будет отправлено за 2 часа до начала.</p>
+          {clientInfo?.notificationsEnabled && (
+            <p className="text-gray-600 mb-6">Напоминание будет отправлено за 2 часа до начала.</p>
+          )}
+          {!clientInfo?.notificationsEnabled && (
+            <p className="text-gray-600 mb-6">Ждём вас на тренировку!</p>
+          )}
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             {selectedSession && (() => {
               const info = getSessionInfo(selectedSession);

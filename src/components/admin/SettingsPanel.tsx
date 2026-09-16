@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import { Trainer, ClassType } from '../../types';
 
 export default function SettingsPanel() {
-  const { trainers, classTypes, addTrainer, updateTrainer, removeTrainer, addClassType, updateClassType, removeClassType } = useStore();
+  const { trainers, classTypes, addTrainer, updateTrainer, removeTrainer, addClassType, updateClassType, removeClassType, notificationSettings, updateNotificationSettings } = useStore();
   
   const [editingTrainer, setEditingTrainer] = useState<Trainer | null>(null);
   const [editingClassType, setEditingClassType] = useState<ClassType | null>(null);
   const [showTrainerForm, setShowTrainerForm] = useState(false);
   const [showClassTypeForm, setShowClassTypeForm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{type: 'trainer' | 'classType', id: string} | null>(null);
+  
+  // Advanced settings
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [notificationSettingsSaved, setNotificationSettingsSaved] = useState(false);
+  const [tempNotificationSettings, setTempNotificationSettings] = useState(notificationSettings);
   
   // Trainer form state
   const [trainerName, setTrainerName] = useState('');
@@ -121,6 +126,12 @@ export default function SettingsPanel() {
 
   const cancelDelete = () => {
     setDeleteConfirm(null);
+  };
+
+  const handleSaveNotificationSettings = () => {
+    updateNotificationSettings(tempNotificationSettings);
+    setNotificationSettingsSaved(true);
+    setTimeout(() => setNotificationSettingsSaved(false), 3000);
   };
 
   return (
@@ -376,6 +387,159 @@ export default function SettingsPanel() {
           </div>
         </div>
       )}
+
+      {/* Продвинутые настройки */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <h3 className="text-lg font-semibold text-gray-900">Продвинутые настройки</h3>
+          {showAdvancedSettings ? (
+            <ChevronUp className="w-5 h-5 text-gray-500" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-500" />
+          )}
+        </button>
+
+        {showAdvancedSettings && (
+          <div className="mt-4 space-y-6 animate-fade-in">
+            {/* Telegram настройки */}
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xl">💬</span>
+                Telegram уведомления
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Токен бота
+                  </label>
+                  <input
+                    type="text"
+                    value={tempNotificationSettings.telegram_bot_token}
+                    onChange={(e) => setTempNotificationSettings({
+                      ...tempNotificationSettings,
+                      telegram_bot_token: e.target.value
+                    })}
+                    placeholder="1234567890:ABCdefGHI..."
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Получите токен у <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-[#E11D48] hover:underline">@BotFather</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* SMTP настройки */}
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <span className="text-xl">📧</span>
+                Email уведомления (SMTP)
+              </h4>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      SMTP хост
+                    </label>
+                    <input
+                      type="text"
+                      value={tempNotificationSettings.smtp_host}
+                      onChange={(e) => setTempNotificationSettings({
+                        ...tempNotificationSettings,
+                        smtp_host: e.target.value
+                      })}
+                      placeholder="smtp.gmail.com"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Порт
+                    </label>
+                    <input
+                      type="number"
+                      value={tempNotificationSettings.smtp_port}
+                      onChange={(e) => setTempNotificationSettings({
+                        ...tempNotificationSettings,
+                        smtp_port: parseInt(e.target.value) || 587
+                      })}
+                      placeholder="587"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email пользователя
+                  </label>
+                  <input
+                    type="email"
+                    value={tempNotificationSettings.smtp_user}
+                    onChange={(e) => setTempNotificationSettings({
+                      ...tempNotificationSettings,
+                      smtp_user: e.target.value
+                    })}
+                    placeholder="your@email.com"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Пароль
+                  </label>
+                  <input
+                    type="password"
+                    value={tempNotificationSettings.smtp_password}
+                    onChange={(e) => setTempNotificationSettings({
+                      ...tempNotificationSettings,
+                      smtp_password: e.target.value
+                    })}
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    От имени
+                  </label>
+                  <input
+                    type="text"
+                    value={tempNotificationSettings.smtp_from}
+                    onChange={(e) => setTempNotificationSettings({
+                      ...tempNotificationSettings,
+                      smtp_from: e.target.value
+                    })}
+                    placeholder="LIFE Studio <noreply@lifestudio.com>"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Кнопка сохранения */}
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleSaveNotificationSettings}
+                className="flex items-center gap-2 px-4 py-2 bg-[#E11D48] text-white rounded-lg text-sm font-medium hover:bg-[#BE123C] transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                Сохранить настройки
+              </button>
+              {notificationSettingsSaved && (
+                <span className="text-sm text-green-600 flex items-center gap-1">
+                  <Check className="w-4 h-4" />
+                  Настройки сохранены
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

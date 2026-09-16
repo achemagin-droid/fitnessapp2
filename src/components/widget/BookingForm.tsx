@@ -7,7 +7,7 @@ import { ArrowLeft, User, Phone, Mail, Send, CreditCard, AlertCircle } from 'luc
 interface BookingFormProps {
   sessionId: string;
   onBack: () => void;
-  onSuccess: (clientInfo: { name: string; passInfo?: { remaining: number; total: number; endDate: string } }) => void;
+  onSuccess: (clientInfo: { name: string; passInfo?: { remaining: number; total: number; endDate: string }; notificationsEnabled: boolean }) => void;
 }
 
 export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFormProps) {
@@ -22,7 +22,7 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [telegramId, setTelegramId] = useState('');
-  const [notificationPref, setNotificationPref] = useState<'telegram' | 'email' | 'none'>('telegram');
+  const [notificationPref, setNotificationPref] = useState<'telegram' | 'email' | 'none'>('none');
   const [existingClientId, setExistingClientId] = useState<string | null>(null);
   const [activePass, setActivePass] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,13 +72,14 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
       return;
     }
 
+    // Проверка на пустые поля уведомлений - предупреждение, но не блокировка
     if (notificationPref === 'email' && !email.trim()) {
-      setError('Укажите email для уведомлений');
+      setError('Email не указан - уведомления не будут отправлены');
       return;
     }
 
     if (notificationPref === 'telegram' && !telegramId.trim()) {
-      setError('Укажите Telegram для уведомлений');
+      setError('Telegram не указан - уведомления не будут отправлены');
       return;
     }
 
@@ -129,7 +130,8 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
           remaining: updatedPass.remaining_visits,
           total: updatedPass.total_visits,
           endDate: updatedPass.end_date
-        } : undefined
+        } : undefined,
+        notificationsEnabled: notificationPref !== 'none'
       });
     }, 500);
   };
@@ -239,14 +241,14 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
           </div>
 
           <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-3">Напомнить о тренировке</h3>
-            <p className="text-sm text-gray-500 mb-4">За 2 часа до начала</p>
+            <h3 className="font-semibold text-gray-900 mb-3">Уведомления о тренировке</h3>
+            <p className="text-sm text-gray-500 mb-4">Напоминание за 2 часа до начала (необязательно)</p>
             
             <div className="flex gap-2 mb-4">
               {[
                 { value: 'telegram' as const, label: 'Telegram', icon: '💬' },
                 { value: 'email' as const, label: 'Email', icon: '📧' },
-                { value: 'none' as const, label: 'Не нужно', icon: '🔕' },
+                { value: 'none' as const, label: 'Без уведомлений', icon: '🔕' },
               ].map((option) => (
                 <button
                   key={option.value}
