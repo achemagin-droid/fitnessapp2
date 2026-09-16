@@ -10,8 +10,8 @@ python-multipart==0.0.9
 # --- Database ---
 sqlalchemy==2.0.35
 alembic==1.13.2
-asyncpg==0.29.0
-psycopg2-binary==2.9.9
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
 
 # --- Authentication ---
 python-jose[cryptography]==3.3.0

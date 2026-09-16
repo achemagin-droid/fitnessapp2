@@ -1,9 +1,22 @@
 """Модели SQLAlchemy для базы данных."""
 import uuid
-from datetime import datetime, date
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Date, ForeignKey, Text, UniqueConstraint, CheckConstraint
+from datetime import datetime
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
 
 

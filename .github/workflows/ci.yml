@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Type check
-        run: npx tsc --noEmit || true
+        run: npm run typecheck
 
       - name: Build
         run: npm run build
@@ -95,10 +95,10 @@ jobs:
           pip install pytest pytest-asyncio httpx ruff mypy
 
       - name: Lint (ruff)
-        run: ruff check . || true
+        run: ruff check . --select E,F,I --ignore E402,E712
 
-      - name: Type check (mypy)
-        run: mypy app --ignore-missing-imports || true
+      - name: Python syntax check
+        run: python -m compileall -q app
 
       - name: Run tests
         env:
@@ -107,7 +107,7 @@ jobs:
           POSTGRES_DB: checklis_test
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-        run: pytest tests/ -v --tb=short || echo "No tests yet"
+        run: pytest tests/ -v --tb=short
 
   # ============================================
   # Docker build check (без публикации)

@@ -1,22 +1,21 @@
 """Эндпоинты для работы с расписанием."""
+from datetime import date, datetime
+
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, date
-from typing import Optional
+from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.session import ClassSession
-from app.models.booking import Booking
-from app.schemas.session import SessionResponse, SessionListResponse
+from app.models.models import Booking, ClassSession
+from app.schemas.session import SessionListResponse, SessionResponse
 
 router = APIRouter()
 
 
 @router.get("/sessions", response_model=SessionListResponse)
 async def get_sessions(
-    date_from: Optional[date] = Query(None, description="Начальная дата"),
-    date_to: Optional[date] = Query(None, description="Конечная дата"),
+    date_from: date | None = Query(None, description="Начальная дата"),
+    date_to: date | None = Query(None, description="Конечная дата"),
     db: Session = Depends(get_db)
 ):
     """Получить список занятий с фильтрацией по дате."""

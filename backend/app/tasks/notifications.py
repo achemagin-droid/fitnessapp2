@@ -1,6 +1,8 @@
 """Celery-задачи для отправки уведомлений."""
 from datetime import datetime, timedelta
+
 from celery import Celery
+
 from app.core.config import settings
 
 celery_app = Celery(
@@ -24,9 +26,10 @@ celery_app.conf.beat_schedule = {
 @celery_app.task(name="app.tasks.notifications.send_upcoming_reminders")
 def send_upcoming_reminders():
     """Отправить напоминания за 2 часа до начала тренировки."""
-    from app.core.database import SessionLocal
-    from app.models.models import ClassSession, Booking, Client
     from sqlalchemy import and_
+
+    from app.core.database import SessionLocal
+    from app.models.models import Booking, ClassSession, Client
 
     db = SessionLocal()
     try:
@@ -99,9 +102,10 @@ def send_telegram(chat_id: str, message: str):
 @celery_app.task(name="app.tasks.notifications.send_email")
 def send_email(to_email: str, subject: str, body: str):
     """Отправить email через SMTP."""
-    import aiosmtplib
-    from email.mime.text import MIMEText
     import asyncio
+    from email.mime.text import MIMEText
+
+    import aiosmtplib
 
     if not settings.smtp_host:
         print(f"[Email] Нет SMTP. Сообщение для {to_email}: {body}")
@@ -132,9 +136,10 @@ def send_email(to_email: str, subject: str, body: str):
 @celery_app.task(name="app.tasks.notifications.deactivate_expired_passes")
 def deactivate_expired_passes():
     """Деактивировать просроченные абонементы."""
+    from datetime import date
+
     from app.core.database import SessionLocal
     from app.models.models import Pass
-    from datetime import date
 
     db = SessionLocal()
     try:

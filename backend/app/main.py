@@ -4,6 +4,7 @@ CheckLis Booking — FastAPI Application
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.core.config import settings
 
 app = FastAPI(
@@ -17,14 +18,14 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Роутеры
-from app.api.routes import sessions, bookings, clients, admin, webhooks
+from app.api.routes import admin, bookings, clients, sessions, webhooks
 
 app.include_router(sessions.router, prefix="/api", tags=["Sessions"])
 app.include_router(bookings.router, prefix="/api", tags=["Bookings"])

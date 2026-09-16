@@ -16,11 +16,11 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist ./built-dist
 
 # Простой HTTP-сервер для раздачи статики
 RUN npm install -g serve
 
 EXPOSE 3000
 
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["sh", "-c", "cp -a /app/built-dist/. /app/dist/ && exec serve -s /app/dist -l 3000"]

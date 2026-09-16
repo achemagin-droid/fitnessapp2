@@ -162,7 +162,8 @@ npx serve dist -l 3000
 git clone https://github.com/your-org/checklis-booking.git
 cd checklis-booking
 
-# Скопировать файл переменных окружения
+# Необязательно: для production можно создать .env
+# Для локального запуска значения по умолчанию уже заданы в Compose.
 cp .env.example .env
 ```
 
@@ -199,8 +200,8 @@ REDIS_URL=redis://redis:6379/0
 ### 3. Запуск через Docker Compose
 
 ```bash
-# Собрать и запустить все сервисы
-docker compose up -d --build
+# Собрать и запустить все сервисы одной командой
+docker compose up -d
 
 # Проверить статус
 docker compose ps
@@ -209,7 +210,9 @@ docker compose ps
 docker compose logs -f backend
 ```
 
-### 4. Инициализация базы данных
+> При первом запуске PostgreSQL автоматически выполняет `backend/init.sql`, поэтому отдельная инициализация для демо-режима не требуется.
+
+### 4. Инициализация базы данных (опционально)
 
 ```bash
 # Применить миграции

@@ -2,8 +2,8 @@
 Seed-скрипт для заполнения начальных данных.
 Запуск: python -m app.seed
 """
-from app.core.database import engine, SessionLocal, Base
-from app.models.models import Trainer, ClassType, BookingStatus
+from app.core.database import Base, SessionLocal, engine
+from app.models.models import BookingStatus, ClassType, Trainer
 
 
 def seed():
