@@ -10,6 +10,7 @@ export default function Widget() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [clientInfo, setClientInfo] = useState<{ name: string; passInfo?: { remaining: number; total: number; endDate: string } } | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
 
   const weekDays = useMemo(() => {
@@ -49,8 +50,11 @@ export default function Widget() {
             <Check className="w-10 h-10 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Вы записаны!</h2>
-          <p className="text-gray-600 mb-6">Ждём вас на тренировку. Напоминание будет отправлено за 2 часа до начала.</p>
-          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+          {clientInfo?.name && (
+            <p className="text-gray-600 mb-2">{clientInfo.name}, ждём вас на тренировку!</p>
+          )}
+          <p className="text-gray-600 mb-6">Напоминание будет отправлено за 2 часа до начала.</p>
+          <div className="bg-gray-50 rounded-xl p-4 mb-4">
             {selectedSession && (() => {
               const info = getSessionInfo(selectedSession);
               if (!info) return null;
@@ -65,8 +69,25 @@ export default function Widget() {
               );
             })()}
           </div>
+          {clientInfo?.passInfo && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-left">
+              <p className="text-sm font-medium text-green-800 mb-1">Ваш абонемент</p>
+              <p className="text-sm text-green-700">
+                Осталось {clientInfo.passInfo.remaining} из {clientInfo.passInfo.total} посещений
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                Действует до {format(parseISO(clientInfo.passInfo.endDate), 'd MMMM yyyy', { locale: ru })}
+              </p>
+            </div>
+          )}
+          {!clientInfo?.passInfo && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
+              <p className="text-sm font-medium text-amber-800">Нет активного абонемента</p>
+              <p className="text-xs text-amber-600">Оплата на месте</p>
+            </div>
+          )}
           <button
-            onClick={() => { setBookingSuccess(false); setSelectedSession(null); }}
+            onClick={() => { setBookingSuccess(false); setSelectedSession(null); setClientInfo(null); }}
             className="w-full bg-[#E11D48] text-white py-3 rounded-xl font-semibold hover:bg-[#BE123C] transition-colors"
           >
             Записаться ещё
@@ -81,7 +102,10 @@ export default function Widget() {
       <BookingForm
         sessionId={selectedSession}
         onBack={() => setSelectedSession(null)}
-        onSuccess={() => setBookingSuccess(true)}
+        onSuccess={(info) => {
+          setClientInfo(info);
+          setBookingSuccess(true);
+        }}
       />
     );
   }

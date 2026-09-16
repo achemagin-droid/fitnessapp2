@@ -7,7 +7,7 @@ import { ArrowLeft, User, Phone, Mail, Send, CreditCard, AlertCircle } from 'luc
 interface BookingFormProps {
   sessionId: string;
   onBack: () => void;
-  onSuccess: () => void;
+  onSuccess: (clientInfo: { name: string; passInfo?: { remaining: number; total: number; endDate: string } }) => void;
 }
 
 export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFormProps) {
@@ -120,7 +120,17 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
 
       addBooking(booking);
       setIsSubmitting(false);
-      onSuccess();
+      
+      // Получаем актуальную информацию об абонементе после записи
+      const updatedPass = getActivePassForClient(clientId);
+      onSuccess({
+        name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+        passInfo: updatedPass ? {
+          remaining: updatedPass.remaining_visits,
+          total: updatedPass.total_visits,
+          endDate: updatedPass.end_date
+        } : undefined
+      });
     }, 500);
   };
 
@@ -158,6 +168,9 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
               <p className="text-sm font-medium text-green-800">Ваш абонемент</p>
               <p className="text-xs text-green-600">
                 Осталось {activePass.remaining_visits} из {activePass.total_visits} посещений
+              </p>
+              <p className="text-xs text-green-600">
+                Действует до {format(parseISO(activePass.end_date), 'd MMMM yyyy', { locale: ru })}
               </p>
             </div>
           </div>
