@@ -161,6 +161,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        NPM_PROXY: ${NPM_PROXY:-}
     pull_policy: build
     image: ${FRONTEND_IMAGE:-checklis-frontend:local}
     container_name: checklis-frontend
