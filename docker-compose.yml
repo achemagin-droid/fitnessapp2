@@ -161,6 +161,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      network: host
       args:
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
         NPM_PROXY: ${NPM_PROXY:-}
