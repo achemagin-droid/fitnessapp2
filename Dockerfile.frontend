@@ -25,10 +25,20 @@ FROM node:24-alpine
 
 WORKDIR /app
 
+ARG NPM_REGISTRY=https://registry.npmjs.org
+ARG NPM_PROXY
+
 COPY --from=builder /app/dist ./built-dist
 
 # Простой HTTP-сервер для раздачи статики
-RUN npm install -g serve
+RUN npm config set registry "$NPM_REGISTRY" && \
+    if [ -n "$NPM_PROXY" ]; then \
+      npm config set proxy "$NPM_PROXY" && \
+      npm config set https-proxy "$NPM_PROXY"; \
+    fi && \
+    npm config set fetch-timeout 300000 && \
+    npm config set fetch-retries 5 && \
+    npm install -g serve
 
 EXPOSE 3000
 
