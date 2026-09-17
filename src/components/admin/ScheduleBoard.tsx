@@ -63,7 +63,7 @@ export default function ScheduleBoard({ token }: { token?: string }) {
   const createClassType = () => {
     const name = classTypeQuery.trim();
     if (!name || classTypes.some(item => item.name.toLowerCase() === name.toLowerCase())) return;
-    const created = { id: `ct-custom-${Date.now()}`, name, description: '', duration_minutes: 60, max_capacity: 10, color_code: '#E11D48', is_mock: false };
+    const created = { id: `ct-custom-${Date.now()}`, name, description: '', duration_minutes: 60, max_capacity: 10, color_code: '#E11D48', is_mock: false, is_custom: true };
     classTypes.push(created);
     setRecurring({ ...recurring, classTypeId: created.id });
     setClassTypeQuery(created.name);

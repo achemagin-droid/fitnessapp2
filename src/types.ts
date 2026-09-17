@@ -13,6 +13,7 @@ export interface ClassType {
   max_capacity: number;
   color_code: string;
   is_mock?: boolean;
+  is_custom?: boolean;
 }
 
 export interface ClassSession {

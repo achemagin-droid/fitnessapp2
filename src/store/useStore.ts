@@ -67,7 +67,15 @@ export const useStore = create<AppState>()(
       },
       updateSession: (id, changes, scope) => set(state => { const current = state.sessions.find(session => session.id === id); return { sessions: state.sessions.map(session => session.id === id || (scope === 'future' && current?.series_id && session.series_id === current.series_id && session.start_time >= current.start_time) ? { ...session, ...changes } : session) }; }),
       cancelSession: (id, reason, scope = 'single') => set(state => { const current = state.sessions.find(session => session.id === id); return { sessions: state.sessions.map(session => session.id === id || (scope === 'future' && current?.series_id && session.series_id === current.series_id && session.start_time >= current.start_time) ? { ...session, is_cancelled: true, cancellation_reason: reason } : session) }; }),
-      deleteSession: (id, scope = 'single') => set(state => { const current = state.sessions.find(session => session.id === id); return { sessions: state.sessions.filter(session => !(session.id === id || (scope === 'future' && current?.series_id && session.series_id === current.series_id && session.start_time >= current.start_time))) }; }),
+      deleteSession: (id, scope = 'single') => set(state => {
+        const current = state.sessions.find(session => session.id === id);
+        const sessions = state.sessions.filter(session => !(session.id === id || (scope === 'future' && current?.series_id && session.series_id === current.series_id && session.start_time >= current.start_time)));
+        const usedTypes = new Set(sessions.map(session => session.class_type_id));
+        for (let index = classTypes.length - 1; index >= 0; index -= 1) {
+          if (classTypes[index].is_custom && !usedTypes.has(classTypes[index].id)) classTypes.splice(index, 1);
+        }
+        return { sessions };
+      }),
       deleteClient: (id) => set(state => ({ clients: state.clients.filter(client => client.id !== id), bookings: state.bookings.filter(booking => booking.client_id !== id), passes: state.passes.filter(pass => pass.client_id !== id) })),
       refreshSessions: async () => { const result = await getSessions(); set({ sessions: result.sessions.map(item => ({ ...item, is_active: true })) }); },
       
