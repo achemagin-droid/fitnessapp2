@@ -19,10 +19,10 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
     # App
-    secret_key: str = "change-me"
+    secret_key: str = ""
     # Comma-separated to support Docker Compose environment variables.
     cors_origins: str = "http://localhost,http://localhost:3000,http://localhost:5173"
-    admin_password: str = "admin"
+    admin_password: str = ""
 
     # Telegram
     telegram_bot_token: str = ""

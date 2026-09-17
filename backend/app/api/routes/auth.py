@@ -93,7 +93,10 @@ def login(data: LoginRequest, response: Response, db: Session = Depends(get_db))
     ).first()
     if not credential or not verify_password(data.password, credential.password_hash):
         raise HTTPException(status_code=401, detail="Неверное имя тренера или пароль")
-    response.set_cookie("admin_session", create_token(credential), httponly=True, samesite="lax", secure=False, max_age=43200)
+    response.set_cookie(
+        "admin_session", create_token(credential), httponly=True,
+        samesite="lax", secure=False, max_age=43200,
+    )
     return {"username": credential.username}
 
 

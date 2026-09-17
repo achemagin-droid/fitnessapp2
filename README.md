@@ -118,9 +118,8 @@ npm run dev
 ```
 
 Откройте в браузере:
-- **Лендинг:** http://localhost:5173/
-- **Виджет записи:** http://localhost:5173/#/widget
-- **Админ-панель:** http://localhost:5173/#/admin
+- **Клиентский интерфейс:** http://localhost:5173/
+- **Админ-панель:** http://localhost:5173/admin/
 
 ### Сборка для продакшена
 
@@ -162,8 +161,8 @@ npx serve dist -l 3000
 git clone https://github.com/your-org/checklis-booking.git
 cd checklis-booking
 
-# Необязательно: для production можно создать .env
-# Для локального запуска значения по умолчанию уже заданы в Compose.
+# Для запуска задайте секреты администратора:
+# SECRET_KEY — случайная строка, ADMIN_PASSWORD — пароль тренеров.
 cp .env.example .env
 ```
 

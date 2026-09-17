@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
@@ -12,7 +12,10 @@ class TrainerCredential(Base):
     __tablename__ = "trainer_credentials"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    trainer_id = Column(UUID(as_uuid=True), nullable=False, unique=True)
+    trainer_id = Column(
+        UUID(as_uuid=True), ForeignKey("trainers.id", ondelete="CASCADE"),
+        nullable=False, unique=True,
+    )
     username = Column(String(100), nullable=False, unique=True, index=True)
     password_hash = Column(Text, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
