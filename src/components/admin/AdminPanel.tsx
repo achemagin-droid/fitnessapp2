@@ -71,7 +71,7 @@ export default function AdminPanel({ token, username, onLogout }: { token: strin
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         {activeTab === 'schedule' && <ScheduleBoard />}
-        {activeTab === 'crm' && <ClientCRM />}
+        {activeTab === 'crm' && <ClientCRM token={token} />}
         {activeTab === 'notifications' && <NotificationsPanel />}
         {activeTab === 'broadcast' && <BroadcastPanel token={token} />}
         {activeTab === 'settings' && <SettingsPanel token={token} />}

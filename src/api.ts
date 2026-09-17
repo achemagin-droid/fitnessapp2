@@ -41,6 +41,8 @@ export const saveNotificationSettings = (token: string | undefined, data: Notifi
   request<{ ok: boolean }>('/auth/settings/notifications', { method: 'PUT', body: JSON.stringify(data) }, token);
 export const sendBroadcast = (token: string | undefined, message: string) =>
   request<{ ok: boolean; task_id: string }>('/admin/broadcast', { method: 'POST', body: JSON.stringify({ message }) }, token);
+export const getAdminClients = (token?: string) => request<{ clients: AdminClient[] }>('/admin/clients', {}, token);
+export const deleteAdminClient = (token: string | undefined, id: string) => request<{ ok: boolean }>(`/admin/clients/${id}`, { method: 'DELETE' }, token);
 
 export interface TrainerRecord { id: string; name: string; description: string; username: string; }
 export interface TrainerCreate { name: string; description: string; username: string; password: string; }
@@ -62,6 +64,7 @@ export interface NotificationSettingsInput {
 }
 export interface ClassSessionApi { id: string; class_type_id: string; trainer_id: string; start_time: string; end_time: string; occupancy: number; max_capacity: number; class_name: string; trainer_name: string; description?: string; series_id?: string; is_cancelled?: boolean; cancellation_reason?: string; }
 export interface BookingInput { client_phone: string; client_first_name: string; client_last_name?: string; session_id: string; notification_preference: string; telegram_id?: string; email?: string; }
+export interface AdminClient { id: string; first_name: string; last_name: string; phone: string; email?: string; notification_preference: string; created_at?: string; }
 export interface ClientLookup {
   found: boolean;
   client?: { id: string; first_name: string; last_name: string; phone: string; email?: string; telegram_id?: string; notification_preference: 'telegram' | 'email' | 'none' };
