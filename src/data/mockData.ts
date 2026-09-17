@@ -8,12 +8,12 @@ export const trainers: Trainer[] = [
 ];
 
 export const classTypes: ClassType[] = [
-  { id: 'ct1', name: 'Йога', description: 'Хатха-йога для всех уровней', duration_minutes: 60, max_capacity: 12, color_code: '#10B981' },
-  { id: 'ct2', name: 'Пилатес', description: 'Укрепление мышечного корсета', duration_minutes: 55, max_capacity: 10, color_code: '#8B5CF6' },
-  { id: 'ct3', name: 'Силовая', description: 'Тренировка с весом', duration_minutes: 60, max_capacity: 8, color_code: '#F59E0B' },
-  { id: 'ct4', name: 'Растяжка', description: 'Гибкость и мобильность', duration_minutes: 45, max_capacity: 15, color_code: '#EC4899' },
-  { id: 'ct5', name: 'Zumba', description: 'Танцевальный фитнес', duration_minutes: 60, max_capacity: 20, color_code: '#3B82F6' },
-  { id: 'ct6', name: 'Кроссфит', description: 'Функциональный тренинг', duration_minutes: 60, max_capacity: 8, color_code: '#EF4444' },
+  { id: 'ct1', name: 'Йога', description: 'Хатха-йога для всех уровней', duration_minutes: 60, max_capacity: 12, color_code: '#10B981', is_mock: true },
+  { id: 'ct2', name: 'Пилатес', description: 'Укрепление мышечного корсета', duration_minutes: 55, max_capacity: 10, color_code: '#8B5CF6', is_mock: true },
+  { id: 'ct3', name: 'Силовая', description: 'Тренировка с весом', duration_minutes: 60, max_capacity: 8, color_code: '#F59E0B', is_mock: true },
+  { id: 'ct4', name: 'Растяжка', description: 'Гибкость и мобильность', duration_minutes: 45, max_capacity: 15, color_code: '#EC4899', is_mock: true },
+  { id: 'ct5', name: 'Zumba', description: 'Танцевальный фитнес', duration_minutes: 60, max_capacity: 20, color_code: '#3B82F6', is_mock: true },
+  { id: 'ct6', name: 'Кроссфит', description: 'Функциональный тренинг', duration_minutes: 60, max_capacity: 8, color_code: '#EF4444', is_mock: true },
 ];
 
 function generateSessions(): ClassSession[] {

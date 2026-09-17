@@ -12,6 +12,7 @@ export interface ClassType {
   duration_minutes: number;
   max_capacity: number;
   color_code: string;
+  is_mock?: boolean;
 }
 
 export interface ClassSession {
