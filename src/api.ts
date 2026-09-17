@@ -45,7 +45,7 @@ export const getAdminClients = (token?: string) => request<{ clients: AdminClien
 export const deleteAdminClient = (token: string | undefined, id: string) => request<{ ok: boolean }>(`/admin/clients/${id}`, { method: 'DELETE' }, token);
 
 export interface TrainerRecord { id: string; name: string; description: string; username: string; }
-export interface TrainerCreate { name: string; description: string; username: string; password: string; }
+export interface TrainerCreate { name: string; description: string; password: string; }
 export interface NotificationSettings {
   telegram_bot_token_configured: boolean;
   smtp_host: string;

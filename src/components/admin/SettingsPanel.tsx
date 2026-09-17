@@ -8,7 +8,7 @@ export default function SettingsPanel({ token }: { token: string }) {
   const [advanced, setAdvanced] = useState(false);
   const [trainers, setTrainers] = useState<TrainerRecord[]>([]);
   const [notification, setNotification] = useState<NotificationSettings>({ telegram_bot_token_configured: false, smtp_host: '', smtp_port: 465, smtp_user: '', smtp_password_configured: false, smtp_from: '' });
-  const [form, setForm] = useState({ name: '', description: '', username: '', password: '' });
+  const [form, setForm] = useState({ name: '', description: '', password: '' });
   const [secrets, setSecrets] = useState({ telegram_bot_token: '', smtp_password: '' });
   const [message, setMessage] = useState('');
 
@@ -19,7 +19,7 @@ export default function SettingsPanel({ token }: { token: string }) {
   useEffect(() => { load().catch(err => setMessage(err.message)); }, []);
 
   const add = async () => {
-    try { await createTrainer(token, form); setForm({ name: '', description: '', username: '', password: '' }); await load(); setMessage('Тренер добавлен'); }
+    try { await createTrainer(token, form); setForm({ name: '', description: '', password: '' }); await load(); setMessage('Тренер добавлен'); }
     catch (err) { setMessage(err instanceof Error ? err.message : 'Ошибка добавления'); }
   };
   const remove = async (id: string) => {
@@ -43,7 +43,7 @@ export default function SettingsPanel({ token }: { token: string }) {
       <div className="space-y-2 mb-5">{trainers.map(t => <div key={t.id} className="flex items-center justify-between border rounded-lg px-3 py-2"><div><b>{t.name}</b><span className="text-xs text-gray-500 ml-2">логин: {t.username}</span></div><button onClick={() => remove(t.id)} className="text-red-500 p-2" title="Удалить доступ"><Trash2 className="w-4 h-4" /></button></div>)}</div>
       <div className="grid md:grid-cols-4 gap-2">
         <input className="border rounded-lg px-3 py-2" placeholder="Имя" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-        <input className="border rounded-lg px-3 py-2" placeholder="Логин" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
+
         <input className="border rounded-lg px-3 py-2" placeholder="Пароль (8+ символов)" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
         <button onClick={add} className="bg-[#E11D48] text-white rounded-lg px-3 py-2 flex items-center justify-center gap-2"><Plus className="w-4 h-4" />Добавить</button>
       </div>

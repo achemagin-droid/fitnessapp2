@@ -73,7 +73,6 @@ class LoginRequest(BaseModel):
 class TrainerCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     description: str = Field(default="", max_length=1000)
-    username: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=8, max_length=200)
 
 
@@ -128,14 +127,14 @@ def list_trainers(_: TrainerCredential = Depends(verify_admin), db: Session = De
 
 @router.post("/trainers", status_code=201)
 def create_trainer(data: TrainerCreate, _: TrainerCredential = Depends(verify_admin), db: Session = Depends(get_db)):
-    if db.query(TrainerCredential).filter(TrainerCredential.username == data.username).first():
+    if db.query(TrainerCredential).filter(TrainerCredential.username == data.name).first():
         raise HTTPException(status_code=409, detail="Такое имя пользователя уже существует")
     trainer = Trainer(name=data.name, description=data.description, is_active=True)
     db.add(trainer)
     db.flush()
-    db.add(TrainerCredential(trainer_id=trainer.id, username=data.username, password_hash=hash_password(data.password)))
+    db.add(TrainerCredential(trainer_id=trainer.id, username=data.name, password_hash=hash_password(data.password)))
     db.commit()
-    return {"id": str(trainer.id), "name": trainer.name, "username": data.username}
+    return {"id": str(trainer.id), "name": trainer.name, "username": trainer.name}
 
 
 @router.delete("/trainers/{trainer_id}")
