@@ -20,6 +20,22 @@ CREATE TABLE IF NOT EXISTS trainers (
 
 CREATE INDEX IF NOT EXISTS idx_trainers_active ON trainers(is_active);
 
+-- Учётные записи тренеров для админ-панели
+CREATE TABLE IF NOT EXISTS trainer_credentials (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    trainer_id UUID NOT NULL UNIQUE REFERENCES trainers(id) ON DELETE CASCADE,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    key VARCHAR(100) PRIMARY KEY,
+    value TEXT NOT NULL DEFAULT '',
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================
 -- Таблица: Типы занятий
 -- ============================================
