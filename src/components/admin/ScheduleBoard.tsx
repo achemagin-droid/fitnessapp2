@@ -28,7 +28,7 @@ export default function ScheduleBoard({ token }: { token?: string }) {
       setClassTypeQuery(first?.name || '');
     }
   }, [useMockData]);
-  React.useEffect(() => { if (token) getTrainers(token).then(result => { setTrainerOptions(result.trainers); if (result.trainers[0] && !result.trainers.some(item => item.id === recurring.trainerId)) setRecurring(current => ({ ...current, trainerId: result.trainers[0].id })); }).catch(() => setTrainerOptions([])); }, [token]);
+  React.useEffect(() => { getTrainers(token).then(result => { setTrainerOptions(result.trainers); if (result.trainers[0] && !result.trainers.some(item => item.id === recurring.trainerId)) setRecurring(current => ({ ...current, trainerId: result.trainers[0].id })); }).catch(() => setTrainerOptions([])); }, [token]);
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 });
