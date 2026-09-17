@@ -57,7 +57,12 @@ CREATE TABLE IF NOT EXISTS class_sessions (
     trainer_id UUID NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
     start_time TIMESTAMPTZ NOT NULL,
     end_time TIMESTAMPTZ NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE
+    description TEXT,
+    series_id UUID,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_cancelled BOOLEAN NOT NULL DEFAULT FALSE,
+    cancelled_at TIMESTAMPTZ,
+    cancellation_reason TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_start ON class_sessions(start_time);

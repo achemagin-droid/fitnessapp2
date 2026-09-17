@@ -22,6 +22,14 @@ export interface ClassSession {
   end_time: string;
   is_active: boolean;
   is_mock?: boolean;
+  description?: string;
+  series_id?: string;
+  is_cancelled?: boolean;
+  cancellation_reason?: string;
+  class_name?: string;
+  trainer_name?: string;
+  max_capacity?: number;
+  color_code?: string;
 }
 
 export interface RecurringSessionInput {
@@ -31,6 +39,7 @@ export interface RecurringSessionInput {
   start_time: string;
   duration_minutes: number;
   weeks: number;
+  description?: string;
 }
 
 export type NotificationPreference = 'telegram' | 'email' | 'none';

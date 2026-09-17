@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { lookupClient } from '../../api';
+import { createBooking, lookupClient } from '../../api';
 import { classTypes, trainers } from '../../data/mockData';
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -11,10 +11,10 @@ interface BookingFormProps { sessionId: string; onBack: () => void; onSuccess: (
 type ClientData = { first_name: string; last_name: string; email?: string; telegram_id?: string; notification_preference: 'telegram' | 'email' | 'none' };
 
 export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFormProps) {
-  const { sessions, addBooking, findClientByPhone, addClient, getActivePassForClient } = useStore();
+  const { sessions, addBooking, findClientByPhone, addClient, getActivePassForClient, useMockData } = useStore();
   const session = sessions.find(item => item.id === sessionId);
-  const classType = classTypes.find(item => item.id === session?.class_type_id);
-  const trainer = trainers.find(item => item.id === session?.trainer_id);
+  const classType = classTypes.find(item => item.id === session?.class_type_id) || (session ? { name: session.class_name, description: session.description || '', duration_minutes: Math.round((new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 60000), max_capacity: session.max_capacity || 0, color_code: session.color_code || '#E11D48' } : undefined);
+  const trainer = trainers.find(item => item.id === session?.trainer_id) || (session ? { name: session.trainer_name } : undefined);
   const [phone, setPhone] = useState(() => localStorage.getItem('checklis-client-phone') || '');
   const [client, setClient] = useState<ClientData | null>(null);
   const [existingClientId, setExistingClientId] = useState<string | null>(null);
@@ -59,6 +59,10 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
     if (notificationPref === 'email' && !email) { setError('Укажите email для уведомлений'); return; }
     if (notificationPref === 'telegram' && !telegramId) { setError('Укажите Telegram для уведомлений'); return; }
     setIsSubmitting(true); localStorage.setItem('checklis-client-phone', phone.trim());
+    if (!useMockData) {
+      createBooking({ client_phone: phone.trim(), client_first_name: firstName, client_last_name: lastName, session_id: sessionId, notification_preference: notificationPref, telegram_id: telegramId || undefined, email: email || undefined }).then(() => { setIsSubmitting(false); onSuccess(); }).catch(error => { setError(error instanceof Error ? error.message : 'Ошибка записи'); setIsSubmitting(false); });
+      return;
+    }
     setTimeout(() => {
       let clientId = existingClientId;
       if (!clientId) { const newClient = { id: `c${Date.now()}`, first_name: firstName, last_name: lastName, phone: phone.trim(), email: email || undefined, telegram_id: telegramId || undefined, notification_preference: notificationPref }; addClient(newClient); clientId = newClient.id; }

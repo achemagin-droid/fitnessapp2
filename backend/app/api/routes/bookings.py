@@ -1,5 +1,5 @@
 """Эндпоинты для работы с записями."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -15,6 +15,12 @@ router = APIRouter()
 async def create_new_booking(data: BookingCreate, db: Session = Depends(get_db)):
     """Создать запись на занятие."""
     # Найти или создать клиента
+    session = db.query(ClassSession).filter(ClassSession.id == data.session_id).first()
+    if not session or not session.is_active:
+        raise HTTPException(status_code=404, detail="Занятие не найдено")
+    if session.is_cancelled:
+        raise HTTPException(status_code=409, detail="Занятие отменено")
+
     client = db.query(Client).filter(Client.phone == data.client_phone).first()
 
     if not client:
@@ -37,7 +43,6 @@ async def create_new_booking(data: BookingCreate, db: Session = Depends(get_db))
     )
 
     # Получить информацию о занятии
-    session = db.query(ClassSession).filter(ClassSession.id == data.session_id).first()
     active_pass = get_active_pass(client.id, db)
 
     return {

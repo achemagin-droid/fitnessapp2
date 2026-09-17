@@ -53,7 +53,12 @@ class ClassSession(Base):
     trainer_id = Column(UUID(as_uuid=True), ForeignKey("trainers.id"), nullable=False)
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
+    description = Column(Text)
+    series_id = Column(UUID(as_uuid=True), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
+    is_cancelled = Column(Boolean, default=False, nullable=False)
+    cancelled_at = Column(DateTime)
+    cancellation_reason = Column(Text)
 
     class_type = relationship("ClassType", back_populates="sessions")
     trainer = relationship("Trainer", back_populates="sessions")

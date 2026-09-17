@@ -19,7 +19,7 @@ async def get_sessions(
     db: Session = Depends(get_db)
 ):
     """Получить список занятий с фильтрацией по дате."""
-    query = db.query(ClassSession).filter(ClassSession.is_active == True)
+    query = db.query(ClassSession).filter(ClassSession.is_active.is_(True))
 
     if date_from:
         query = query.filter(ClassSession.start_time >= datetime.combine(date_from, datetime.min.time()))
@@ -46,6 +46,10 @@ async def get_sessions(
             max_capacity=session.class_type.max_capacity,
             class_name=session.class_type.name,
             trainer_name=session.trainer.name,
+            description=session.description,
+            series_id=session.series_id,
+            is_cancelled=session.is_cancelled,
+            cancellation_reason=session.cancellation_reason,
         ))
 
     return SessionListResponse(sessions=result)
@@ -56,7 +60,7 @@ async def get_session_detail(session_id: str, db: Session = Depends(get_db)):
     """Получить детали конкретного занятия."""
     session = db.query(ClassSession).filter(
         ClassSession.id == session_id,
-        ClassSession.is_active == True
+        ClassSession.is_active.is_(True)
     ).first()
 
     if not session:
@@ -80,4 +84,7 @@ async def get_session_detail(session_id: str, db: Session = Depends(get_db)):
         "max_capacity": session.class_type.max_capacity,
         "spots_left": session.class_type.max_capacity - occupancy,
         "color_code": session.class_type.color_code,
+        "description": session.description,
+        "is_cancelled": session.is_cancelled,
+        "cancellation_reason": session.cancellation_reason,
     }

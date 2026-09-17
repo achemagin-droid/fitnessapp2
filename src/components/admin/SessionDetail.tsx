@@ -12,16 +12,33 @@ interface SessionDetailProps {
 }
 
 export default function SessionDetail({ sessionId, onBack }: SessionDetailProps) {
-  const { sessions, getBookingsForSession, updateBookingStatus, getClientById, getSessionOccupancy, addBooking, addClient } = useStore();
+  const { sessions, getBookingsForSession, updateBookingStatus, getClientById, getSessionOccupancy, addBooking, addClient, updateSession, cancelSession, deleteSession } = useStore();
   const [showWalkIn, setShowWalkIn] = useState(false);
   const [walkInName, setWalkInName] = useState('');
   const [walkInPhone, setWalkInPhone] = useState('');
+  const [description, setDescription] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [scope, setScope] = useState<'single' | 'future'>('single');
 
   const session = sessions.find(s => s.id === sessionId);
   const classType = classTypes.find(ct => ct.id === session?.class_type_id);
   const trainer = trainers.find(t => t.id === session?.trainer_id);
   const bookings = getBookingsForSession(sessionId);
   const occupancy = getSessionOccupancy(sessionId);
+
+  React.useEffect(() => { setDescription(session?.description || ''); setStartTime(session ? session.start_time.slice(0, 16) : ''); }, [session?.description, session?.start_time]);
+  const edit = () => {
+    if (!session) return;
+    const changes: any = { description };
+    if (startTime && startTime !== session.start_time.slice(0, 16)) {
+      const nextStart = new Date(startTime);
+      const duration = new Date(session.end_time).getTime() - new Date(session.start_time).getTime();
+      changes.start_time = nextStart.toISOString(); changes.end_time = new Date(nextStart.getTime() + duration).toISOString();
+    }
+    updateSession(sessionId, changes, scope);
+  };
+  const cancel = () => { if (window.confirm('Отменить это занятие? Оно останется в расписании.')) cancelSession(sessionId, 'Отменено тренером', 'single'); };
+  const remove = () => { if (window.confirm('Удалить занятие без возможности восстановления?')) deleteSession(sessionId, 'single'); onBack(); };
 
   const handleStatusChange = (bookingId: string, status: BookingStatus) => {
     updateBookingStatus(bookingId, status);
@@ -103,6 +120,7 @@ export default function SessionDetail({ sessionId, onBack }: SessionDetailProps)
       </div>
 
       {/* Stats */}
+      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4"><div className="grid md:grid-cols-2 gap-3"><label className="block text-sm font-medium text-gray-700">Дата и время<input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} className="block w-full border rounded-lg p-2 mt-1" /></label><label className="block text-sm font-medium text-gray-700">Применить к<select value={scope} onChange={e => setScope(e.target.value as 'single' | 'future')} className="block w-full border rounded-lg p-2 mt-1"><option value="single">Только это занятие</option><option value="future">Это и все последующие</option></select></label></div><label className="block text-sm font-medium text-gray-700 mt-3">Описание занятия<textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} rows={2} className="w-full border rounded-lg p-2 mt-1 text-sm" placeholder="Необязательно" /></label><div className="flex gap-2 mt-2"><button onClick={edit} className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-sm">Сохранить изменения</button>{!session.is_cancelled && <button onClick={cancel} className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-lg text-sm">Отменить занятие</button>}<button onClick={remove} className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm">Удалить</button></div>{session.is_cancelled && <p className="text-sm text-amber-700 mt-2">Занятие отменено{session.cancellation_reason ? `: ${session.cancellation_reason}` : ''}</p>}</div>
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-blue-50 rounded-xl p-3 text-center">
           <p className="text-2xl font-bold text-blue-700">{occupancy}</p>

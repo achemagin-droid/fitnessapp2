@@ -23,6 +23,56 @@ celery_app.conf.beat_schedule = {
 }
 
 
+@celery_app.task(name="app.tasks.notifications.send_session_change_notifications")
+def send_session_change_notifications(session_id: str, event: str):
+    """Уведомить записанных клиентов об изменении занятия."""
+    from app.core.database import SessionLocal
+    from app.models.models import Booking, ClassSession, Client
+    db = SessionLocal()
+    try:
+        session = db.query(ClassSession).filter(ClassSession.id == session_id).first()
+        if not session:
+            return
+        for booking in db.query(Booking).filter(Booking.session_id == session.id, Booking.status_id == 1).all():
+            client = db.query(Client).filter(Client.id == booking.client_id).first()
+            if not client:
+                continue
+            message = (
+                f"{event}: {session.class_type.name}, "
+                f"{session.start_time.strftime('%d.%m.%Y в %H:%M')}. LIFE Studio"
+            )
+            if client.notification_preference == "telegram" and client.telegram_id:
+                send_telegram.delay(client.telegram_id, message)
+            elif client.notification_preference == "email" and client.email:
+                send_email.delay(client.email, event, message)
+    finally:
+        db.close()
+
+
+@celery_app.task(name="app.tasks.notifications.send_broadcast")
+def send_broadcast(message: str):
+    """Разослать сообщение клиентам с записью или активным абонементом."""
+    from sqlalchemy import or_
+
+    from app.core.database import SessionLocal
+    from app.models.models import Booking, Client, Pass
+    db = SessionLocal()
+    try:
+        clients = db.query(Client).outerjoin(
+            Booking, Booking.client_id == Client.id
+        ).outerjoin(Pass, Pass.client_id == Client.id).filter(
+            or_(Booking.id.isnot(None), (Pass.status == "active") & (Pass.remaining_visits > 0))
+        ).distinct().all()
+        for client in clients:
+            if client.notification_preference == "telegram" and client.telegram_id:
+                send_telegram.delay(client.telegram_id, message)
+            elif client.notification_preference == "email" and client.email:
+                send_email.delay(client.email, "LIFE Studio", message)
+        return len(clients)
+    finally:
+        db.close()
+
+
 def notification_config(db):
     """Берёт настройки из БД, сохраняя fallback на переменные окружения."""
     from app.models.auth import AppSetting

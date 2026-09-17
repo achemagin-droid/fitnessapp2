@@ -31,9 +31,10 @@ app.add_middleware(
 )
 
 # Роутеры
-from app.api.routes import admin, auth, bookings, clients, sessions, webhooks
+from app.api.routes import admin, auth, bookings, clients, session_admin, sessions, webhooks
 
 app.include_router(sessions.router, prefix="/api", tags=["Sessions"])
+app.include_router(session_admin.router, prefix="/api/admin", tags=["Admin sessions"])
 app.include_router(bookings.router, prefix="/api", tags=["Bookings"])
 app.include_router(clients.router, prefix="/api", tags=["Clients"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
@@ -67,6 +68,14 @@ def initialize_auth_schema():
                 updated_at TIMESTAMPTZ DEFAULT NOW()
             )
         """))
+        for statement in (
+            "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS description TEXT",
+            "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS series_id UUID",
+            "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS is_cancelled BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ",
+            "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS cancellation_reason TEXT",
+        ):
+            connection.execute(text(statement))
 
 
 @app.on_event("startup")

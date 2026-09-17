@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Bell, Settings, Sparkles, LogOut } from 'lucide-react';
+import { Calendar, Users, Bell, Settings, Sparkles, LogOut, Send } from 'lucide-react';
 import ScheduleBoard from './ScheduleBoard';
 import ClientCRM from './ClientCRM';
 import NotificationsPanel from './NotificationsPanel';
 import SettingsPanel from './SettingsPanel';
+import BroadcastPanel from './BroadcastPanel';
 
-type AdminTab = 'schedule' | 'crm' | 'notifications' | 'settings';
+type AdminTab = 'schedule' | 'crm' | 'notifications' | 'broadcast' | 'settings';
 
 export default function AdminPanel({ token, username, onLogout }: { token: string; username: string; onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<AdminTab>('schedule');
@@ -14,6 +15,7 @@ export default function AdminPanel({ token, username, onLogout }: { token: strin
     { id: 'schedule' as const, label: 'Расписание', icon: Calendar },
     { id: 'crm' as const, label: 'Клиенты', icon: Users },
     { id: 'notifications' as const, label: 'Уведомления', icon: Bell },
+    { id: 'broadcast' as const, label: 'Рассылка', icon: Send },
     { id: 'settings' as const, label: 'Настройки', icon: Settings },
   ];
 
@@ -27,7 +29,7 @@ export default function AdminPanel({ token, username, onLogout }: { token: strin
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">CheckLis Admin</h1>
+              <h1 className="text-lg font-bold text-gray-900">LIFE Admin</h1>
               <p className="text-xs text-gray-500">LIFE Fitness Studio</p>
             </div>
           </div>
@@ -71,6 +73,7 @@ export default function AdminPanel({ token, username, onLogout }: { token: strin
         {activeTab === 'schedule' && <ScheduleBoard />}
         {activeTab === 'crm' && <ClientCRM />}
         {activeTab === 'notifications' && <NotificationsPanel />}
+        {activeTab === 'broadcast' && <BroadcastPanel token={token} />}
         {activeTab === 'settings' && <SettingsPanel token={token} />}
       </main>
     </div>

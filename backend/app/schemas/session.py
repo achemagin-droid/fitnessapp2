@@ -2,7 +2,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SessionResponse(BaseModel):
@@ -15,6 +15,10 @@ class SessionResponse(BaseModel):
     max_capacity: int
     class_name: str
     trainer_name: str
+    description: str | None = None
+    series_id: UUID | None = None
+    is_cancelled: bool = False
+    cancellation_reason: str | None = None
 
     class Config:
         from_attributes = True
@@ -22,6 +26,30 @@ class SessionResponse(BaseModel):
 
 class SessionListResponse(BaseModel):
     sessions: list[SessionResponse]
+
+
+class SessionUpdate(BaseModel):
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    description: str | None = Field(None, max_length=1000)
+    trainer_id: UUID | None = None
+    scope: str = "single"
+
+
+class SessionCancel(BaseModel):
+    reason: str | None = Field(None, max_length=1000)
+    scope: str = "single"
+
+
+class RecurringSessionCreate(BaseModel):
+    class_type_id: UUID
+    trainer_id: UUID
+    start_date: datetime
+    end_date: datetime
+    start_time: str
+    duration_minutes: int
+    weekdays: list[int]
+    description: str | None = Field(None, max_length=1000)
 
 
 class BookingCreate(BaseModel):

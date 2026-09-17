@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -137,7 +137,7 @@ async def search_clients(
     _=Depends(verify_admin)
 ):
     """Поиск клиентов."""
-    query = db.query(Client)
+    query = db.query(Client).order_by(Client.created_at.desc())
     if phone:
         query = query.filter(Client.phone.ilike(f"%{phone}%"))
     clients = query.limit(20).all()
@@ -149,10 +149,34 @@ async def search_clients(
                 "first_name": c.first_name,
                 "last_name": c.last_name,
                 "phone": c.phone,
+                "email": c.email,
+                "notification_preference": c.notification_preference,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
             }
             for c in clients
         ]
     }
+
+
+@router.delete("/clients/{client_id}")
+async def delete_client(client_id: str, db: Session = Depends(get_db), _=Depends(verify_admin)):
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Клиент не найден")
+    db.delete(client)
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/broadcast")
+async def broadcast(message: str = Body(..., embed=True), db: Session = Depends(get_db), _=Depends(verify_admin)):
+    if not message.strip():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Сообщение не может быть пустым")
+    from app.tasks.notifications import send_broadcast
+    task = send_broadcast.delay(message.strip())
+    return {"ok": True, "task_id": task.id}
 
 
 @router.post("/passes")

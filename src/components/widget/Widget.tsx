@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { classTypes, trainers } from '../../data/mockData';
 import { format, isToday, isTomorrow, parseISO, startOfDay, addDays } from 'date-fns';
@@ -7,11 +7,12 @@ import { Calendar, Clock, Users, MapPin, ChevronLeft, ChevronRight, Check, Spark
 import BookingForm from './BookingForm';
 
 export default function Widget() {
-  const { sessions, getSessionOccupancy } = useStore();
+  const { sessions, getSessionOccupancy, useMockData, refreshSessions } = useStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
+  useEffect(() => { if (!useMockData) refreshSessions().catch(() => undefined); }, [useMockData]);
 
   const weekDays = useMemo(() => {
     const start = addDays(startOfDay(new Date()), weekOffset * 7);
@@ -30,8 +31,8 @@ export default function Widget() {
   const getSessionInfo = (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId);
     if (!session) return null;
-    const classType = classTypes.find(ct => ct.id === session.class_type_id);
-    const trainer = trainers.find(t => t.id === session.trainer_id);
+    const classType = classTypes.find(ct => ct.id === session.class_type_id) || { name: session.class_name, duration_minutes: Math.round((new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 60000), max_capacity: session.max_capacity || 0, color_code: session.color_code || '#E11D48' };
+    const trainer = trainers.find(t => t.id === session.trainer_id) || { name: session.trainer_name };
     const occupancy = getSessionOccupancy(sessionId);
     return { session, classType, trainer, occupancy };
   };
@@ -169,10 +170,10 @@ export default function Widget() {
               return (
                 <button
                   key={session.id}
-                  onClick={() => !isFull && setSelectedSession(session.id)}
-                  disabled={isFull}
+                  onClick={() => !isFull && !session.is_cancelled && setSelectedSession(session.id)}
+                  disabled={isFull || session.is_cancelled}
                   className={`w-full text-left bg-white rounded-2xl p-4 border transition-all animate-fade-in ${
-                    isFull
+                    isFull || session.is_cancelled
                       ? 'border-gray-100 opacity-60 cursor-not-allowed'
                       : 'border-gray-100 hover:border-[#E11D48]/30 hover:shadow-md hover:shadow-rose-100 cursor-pointer'
                   }`}
@@ -184,7 +185,7 @@ export default function Widget() {
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: classType?.color_code }}
                         />
-                        <span className="font-semibold text-gray-900">{classType?.name}</span>
+                        <span className="font-semibold text-gray-900">{classType?.name}{session.is_cancelled ? ' (отменено)' : ''}</span>
                       </div>
                       <p className="text-sm text-gray-500 mb-2">{trainer?.name}</p>
                       <div className="flex items-center gap-4 text-sm text-gray-600">

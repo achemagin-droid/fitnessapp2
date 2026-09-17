@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Client, Booking, Pass, ClassSession, BookingStatus, RecurringSessionInput } from '../types';
 import { initialClients, initialBookings, initialPasses, sessions, classTypes } from '../data/mockData';
+import { getSessions } from '../api';
 
 interface AppState {
   // Data
@@ -12,6 +13,11 @@ interface AppState {
   useMockData: boolean;
   setMockData: (enabled: boolean) => void;
   addRecurringSessions: (input: RecurringSessionInput) => void;
+  updateSession: (id: string, changes: Partial<ClassSession>, scope: 'single' | 'future') => void;
+  cancelSession: (id: string, reason?: string, scope?: 'single' | 'future') => void;
+  deleteSession: (id: string, scope?: 'single' | 'future') => void;
+  deleteClient: (id: string) => void;
+  refreshSessions: () => Promise<void>;
   
   // Client actions
   addClient: (client: Client) => void;
@@ -55,10 +61,15 @@ export const useStore = create<AppState>()(
           const itemStart = new Date(cursor);
           itemStart.setHours(start.getHours(), start.getMinutes(), 0, 0);
           const itemEnd = new Date(itemStart.getTime() + input.duration_minutes * 60000);
-          generated.push({ id: `rec-${itemStart.getTime()}`, class_type_id: input.class_type_id, trainer_id: input.trainer_id, start_time: itemStart.toISOString(), end_time: itemEnd.toISOString(), is_active: true, is_mock: true });
+          generated.push({ id: `rec-${itemStart.getTime()}`, series_id: `series-${start.getTime()}`, class_type_id: input.class_type_id, trainer_id: input.trainer_id, start_time: itemStart.toISOString(), end_time: itemEnd.toISOString(), is_active: true, is_mock: true });
         }
         set(state => ({ sessions: [...state.sessions, ...generated] }));
       },
+      updateSession: (id, changes, scope) => set(state => { const current = state.sessions.find(session => session.id === id); return { sessions: state.sessions.map(session => session.id === id || (scope === 'future' && current?.series_id && session.series_id === current.series_id && session.start_time >= current.start_time) ? { ...session, ...changes } : session) }; }),
+      cancelSession: (id, reason, scope = 'single') => set(state => { const current = state.sessions.find(session => session.id === id); return { sessions: state.sessions.map(session => session.id === id || (scope === 'future' && current?.series_id && session.series_id === current.series_id && session.start_time >= current.start_time) ? { ...session, is_cancelled: true, cancellation_reason: reason } : session) }; }),
+      deleteSession: (id, scope = 'single') => set(state => { const current = state.sessions.find(session => session.id === id); return { sessions: state.sessions.filter(session => !(session.id === id || (scope === 'future' && current?.series_id && session.series_id === current.series_id && session.start_time >= current.start_time))) }; }),
+      deleteClient: (id) => set(state => ({ clients: state.clients.filter(client => client.id !== id), bookings: state.bookings.filter(booking => booking.client_id !== id), passes: state.passes.filter(pass => pass.client_id !== id) })),
+      refreshSessions: async () => { const result = await getSessions(); set({ sessions: result.sessions.map(item => ({ ...item, is_active: true })) }); },
       
       addClient: (client) => set((state) => ({ clients: [...state.clients, client] })),
       

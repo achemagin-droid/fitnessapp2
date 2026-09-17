@@ -3,16 +3,17 @@ import { useStore } from '../../store/useStore';
 import { classTypes, sessions } from '../../data/mockData';
 import { format, parseISO, isAfter } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Search, Phone, CreditCard, History, Plus, User, Calendar, AlertCircle } from 'lucide-react';
+import { Search, Phone, CreditCard, History, Plus, User, Calendar, AlertCircle, Trash2 } from 'lucide-react';
 import { BookingStatus } from '../../types';
 
 export default function ClientCRM() {
-  const { clients, findClientByPhone, getBookingsForClient, getAllPassesForClient, getActivePassForClient, addPass, sessions: allSessions } = useStore();
+  const { clients, findClientByPhone, getBookingsForClient, getAllPassesForClient, getActivePassForClient, addPass, deleteClient, sessions: allSessions } = useStore();
   const [searchPhone, setSearchPhone] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showNewPass, setShowNewPass] = useState(false);
   const [newPassVisits, setNewPassVisits] = useState(10);
   const [newPassDays, setNewPassDays] = useState(30);
+  const [showAll, setShowAll] = useState(false);
 
   const foundClient = useMemo(() => {
     if (searchPhone.length >= 11) {
@@ -65,6 +66,8 @@ export default function ClientCRM() {
   return (
     <div className="animate-fade-in">
       <h2 className="text-xl font-bold text-gray-900 mb-6">Клиенты и абонементы</h2>
+      <button onClick={() => setShowAll(!showAll)} className="mb-4 px-4 py-2 bg-gray-900 text-white rounded-xl text-sm">{showAll ? 'Скрыть список' : `Показать всех клиентов (${clients.length})`}</button>
+      {showAll && <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm mb-6 space-y-2">{clients.map(item => <div key={item.id} className="flex items-center justify-between border-b last:border-0 py-2"><div><b>{item.first_name} {item.last_name}</b><p className="text-xs text-gray-500">{item.phone} · {item.email || 'email нет'}</p></div><button onClick={() => { if (window.confirm('Удалить клиента и связанные записи?')) { deleteClient(item.id); if (selectedClientId === item.id) setSelectedClientId(null); } }} className="p-2 text-red-500" title="Удалить клиента"><Trash2 className="w-4 h-4" /></button></div>)}</div>}
 
       {/* Search */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mb-6">
