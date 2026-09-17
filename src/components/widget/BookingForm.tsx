@@ -31,7 +31,7 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
     let cancelled = false;
     setLookupLoading(true);
     const timer = window.setTimeout(async () => {
-      const local = findClientByPhone(phone);
+      const local = useMockData ? findClientByPhone(phone) : undefined;
       try {
         const result = await lookupClient(phone);
         if (cancelled) return;
@@ -46,7 +46,7 @@ export default function BookingForm({ sessionId, onBack, onSuccess }: BookingFor
       } finally { if (!cancelled) { setLookupDone(true); setLookupLoading(false); } }
     }, 300);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [phone]);
+  }, [phone, useMockData]);
 
   if (!session || !classType) return null;
   const firstName = client?.first_name || '';

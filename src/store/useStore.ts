@@ -49,7 +49,13 @@ export const useStore = create<AppState>()(
       passes: initialPasses,
       sessions: sessions,
       useMockData: true,
-      setMockData: (enabled) => set({ useMockData: enabled, sessions: enabled ? sessions : [] }),
+      setMockData: (enabled) => set({
+        useMockData: enabled,
+        clients: enabled ? [...initialClients] : [],
+        bookings: enabled ? [...initialBookings] : [],
+        passes: enabled ? [...initialPasses] : [],
+        sessions: enabled ? [...sessions] : [],
+      }),
       addRecurringSessions: (input) => {
         const generated: ClassSession[] = [];
         const start = new Date(input.start_time);
