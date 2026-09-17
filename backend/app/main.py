@@ -4,11 +4,12 @@ CheckLis Booking — FastAPI Application
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 
 from app.api.routes.auth import hash_password
 from app.core.config import settings
-from app.core.database import Base, SessionLocal, engine
+from app.core.database import SessionLocal, engine
 from app.models.auth import TrainerCredential
 from app.models.models import Trainer
 
@@ -45,18 +46,42 @@ async def health_check():
     return {"status": "ok", "version": "1.0.0"}
 
 
+def initialize_auth_schema():
+    """Создаёт auth-таблицы один раз, безопасно для нескольких workers."""
+    with engine.begin() as connection:
+        connection.execute(text("SELECT pg_advisory_xact_lock(4815162342)"))
+        connection.execute(text("""
+            CREATE TABLE IF NOT EXISTS trainer_credentials (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                trainer_id UUID NOT NULL UNIQUE,
+                username VARCHAR(100) NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        connection.execute(text("""
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key VARCHAR(100) PRIMARY KEY,
+                value TEXT NOT NULL DEFAULT '',
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+
+
 @app.on_event("startup")
 def initialize_auth_tables():
-    Base.metadata.create_all(bind=engine)
+    initialize_auth_schema()
     db = SessionLocal()
     try:
-        trainers = db.query(Trainer).filter(Trainer.is_active.is_(True)).all()
-        for trainer in trainers:
-            db.execute(insert(TrainerCredential).values(
-                trainer_id=trainer.id,
-                username=trainer.name,
-                password_hash=hash_password(settings.admin_password),
-            ).on_conflict_do_nothing(index_elements=["trainer_id"]))
-        db.commit()
+        if settings.admin_password:
+            trainers = db.query(Trainer).filter(Trainer.is_active.is_(True)).all()
+            for trainer in trainers:
+                db.execute(insert(TrainerCredential).values(
+                    trainer_id=trainer.id,
+                    username=trainer.name,
+                    password_hash=hash_password(settings.admin_password),
+                ).on_conflict_do_nothing(index_elements=["trainer_id"]))
+            db.commit()
     finally:
         db.close()
