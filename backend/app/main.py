@@ -31,7 +31,7 @@ app.add_middleware(
 )
 
 # Роутеры
-from app.api.routes import admin, auth, bookings, clients, session_admin, sessions, webhooks
+from app.api.routes import admin, auth, bookings, class_types, clients, session_admin, sessions, webhooks
 
 app.include_router(sessions.router, prefix="/api", tags=["Sessions"])
 app.include_router(session_admin.router, prefix="/api/admin", tags=["Admin sessions"])
@@ -39,6 +39,7 @@ app.include_router(bookings.router, prefix="/api", tags=["Bookings"])
 app.include_router(clients.router, prefix="/api", tags=["Clients"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(class_types.router, prefix="/api/admin", tags=["Admin class types"])
 app.include_router(webhooks.router, prefix="/api/webhook", tags=["Webhooks"])
 
 
@@ -74,6 +75,9 @@ def initialize_auth_schema():
             "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS is_cancelled BOOLEAN NOT NULL DEFAULT FALSE",
             "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ",
             "ALTER TABLE class_sessions ADD COLUMN IF NOT EXISTS cancellation_reason TEXT",
+            "ALTER TABLE class_types ADD COLUMN IF NOT EXISTS is_mock BOOLEAN NOT NULL DEFAULT FALSE",
+            "UPDATE class_types SET is_mock = TRUE "
+            "WHERE name IN ('Йога', 'Пилатес', 'Силовая', 'Растяжка', 'Zumba', 'Кроссфит')",
         ):
             connection.execute(text(statement))
 

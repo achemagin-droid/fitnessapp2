@@ -43,6 +43,9 @@ export const sendBroadcast = (token: string | undefined, message: string) =>
   request<{ ok: boolean; task_id: string }>('/admin/broadcast', { method: 'POST', body: JSON.stringify({ message }) }, token);
 export const getAdminClients = (token?: string) => request<{ clients: AdminClient[] }>('/admin/clients', {}, token);
 export const deleteAdminClient = (token: string | undefined, id: string) => request<{ ok: boolean }>(`/admin/clients/${id}`, { method: 'DELETE' }, token);
+export const getClassTypes = (token?: string) => request<{ class_types: ClassTypeApi[] }>('/admin/class-types', {}, token);
+export const createClassType = (token: string | undefined, name: string) => request<ClassTypeApi>('/admin/class-types', { method: 'POST', body: JSON.stringify({ name }) }, token);
+export const createRecurringSession = (token: string | undefined, data: RecurringSessionApiInput) => request<{ series_id: string; created: number }>('/admin/sessions/recurring', { method: 'POST', body: JSON.stringify(data) }, token);
 
 export interface TrainerRecord { id: string; name: string; description: string; username: string; }
 export interface TrainerCreate { name: string; description: string; password: string; }
@@ -63,6 +66,8 @@ export interface NotificationSettingsInput {
   smtp_from: string;
 }
 export interface ClassSessionApi { id: string; class_type_id: string; trainer_id: string; start_time: string; end_time: string; occupancy: number; max_capacity: number; class_name: string; trainer_name: string; description?: string; series_id?: string; is_cancelled?: boolean; cancellation_reason?: string; }
+export interface ClassTypeApi { id: string; name: string; description: string; duration_minutes: number; max_capacity: number; color_code: string; is_mock?: boolean; }
+export interface RecurringSessionApiInput { class_type_id: string; trainer_id: string; start_date: string; end_date: string; start_time: string; duration_minutes: number; weekdays: number[]; description?: string; }
 export interface BookingInput { client_phone: string; client_first_name: string; client_last_name?: string; session_id: string; notification_preference: string; telegram_id?: string; email?: string; }
 export interface AdminClient { id: string; first_name: string; last_name: string; phone: string; email?: string; notification_preference: string; created_at?: string; }
 export interface ClientLookup {

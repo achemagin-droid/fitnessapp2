@@ -57,7 +57,7 @@ def seed():
             db.add(ClassType(
                 name=name, description=desc,
                 duration_minutes=duration, max_capacity=capacity,
-                color_code=color
+                color_code=color, is_mock=True
             ))
 
     db.commit()

@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS class_types (
     description TEXT,
     duration_minutes INT NOT NULL,
     max_capacity INT NOT NULL,
-    color_code VARCHAR(7) DEFAULT '#E11D48'
+    color_code VARCHAR(7) DEFAULT '#E11D48',
+    is_mock BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- ============================================

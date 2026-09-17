@@ -5,7 +5,7 @@ import { format, parseISO, startOfWeek, addDays, isToday, isSameDay } from 'date
 import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Users, Clock, Plus, ChevronDown } from 'lucide-react';
 import SessionDetail from './SessionDetail';
-import { getTrainers, TrainerRecord } from '../../api';
+import { createClassType as createClassTypeApi, createRecurringSession, getClassTypes, getTrainers, TrainerRecord, ClassTypeApi } from '../../api';
 
 export default function ScheduleBoard({ token }: { token?: string }) {
   const { sessions, getSessionOccupancy, addRecurringSessions, useMockData } = useStore();
@@ -17,7 +17,8 @@ export default function ScheduleBoard({ token }: { token?: string }) {
   const [classTypeDropdownOpen, setClassTypeDropdownOpen] = useState(false);
 
   const [trainerOptions, setTrainerOptions] = useState<TrainerRecord[]>([]);
-  const visibleClassTypes = useMockData ? classTypes : classTypes.filter(item => !item.is_mock);
+  const [availableClassTypes, setAvailableClassTypes] = useState<ClassTypeApi[]>(useMockData ? classTypes : []);
+  const visibleClassTypes = useMockData ? availableClassTypes : availableClassTypes.filter(item => !item.is_mock);
 
   React.useEffect(() => {
     const first = visibleClassTypes[0];
@@ -29,6 +30,7 @@ export default function ScheduleBoard({ token }: { token?: string }) {
     }
   }, [useMockData]);
   React.useEffect(() => { getTrainers(token).then(result => { setTrainerOptions(result.trainers); if (result.trainers[0] && !result.trainers.some(item => item.id === recurring.trainerId)) setRecurring(current => ({ ...current, trainerId: result.trainers[0].id })); }).catch(() => setTrainerOptions([])); }, [token]);
+  React.useEffect(() => { if (useMockData) { setAvailableClassTypes(classTypes); return; } getClassTypes(token).then(result => setAvailableClassTypes(result.class_types)).catch(() => setAvailableClassTypes([])); }, [token, useMockData]);
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -50,21 +52,29 @@ export default function ScheduleBoard({ token }: { token?: string }) {
     );
   }
 
-  const submitRecurring = () => {
-    const type = classTypes.find(item => item.id === recurring.classTypeId);
+  const submitRecurring = async () => {
+    const type = availableClassTypes.find(item => item.id === recurring.classTypeId);
     if (!type || recurring.weekdays.length === 0) return;
     const start = new Date();
     const [hours, minutes] = recurring.startTime.split(':').map(Number);
     start.setHours(hours, minutes, 0, 0);
-    addRecurringSessions({ class_type_id: recurring.classTypeId, trainer_id: recurring.trainerId, weekdays: recurring.weekdays, start_time: start.toISOString(), duration_minutes: type.duration_minutes, weeks: recurring.weeks, description: recurring.description });
+    if (useMockData) {
+      addRecurringSessions({ class_type_id: recurring.classTypeId, trainer_id: recurring.trainerId, weekdays: recurring.weekdays, start_time: start.toISOString(), duration_minutes: type.duration_minutes, weeks: recurring.weeks, description: recurring.description });
+    } else {
+      const end = new Date(start);
+      end.setDate(end.getDate() + recurring.weeks * 7);
+      await createRecurringSession(token, { class_type_id: recurring.classTypeId, trainer_id: recurring.trainerId, start_date: start.toISOString(), end_date: end.toISOString(), start_time: recurring.startTime, duration_minutes: type.duration_minutes, weekdays: recurring.weekdays, description: recurring.description });
+      await useStore.getState().refreshSessions();
+    }
     setShowRecurring(false);
   };
 
-  const createClassType = () => {
+  const createClassType = async () => {
     const name = classTypeQuery.trim();
-    if (!name || classTypes.some(item => item.name.toLowerCase() === name.toLowerCase())) return;
-    const created = { id: `ct-custom-${Date.now()}`, name, description: '', duration_minutes: 60, max_capacity: 10, color_code: '#E11D48', is_mock: false, is_custom: true };
-    classTypes.push(created);
+    if (!name || visibleClassTypes.some(item => item.name.toLowerCase() === name.toLowerCase())) return;
+    const created = useMockData ? { id: `ct-custom-${Date.now()}`, name, description: '', duration_minutes: 60, max_capacity: 10, color_code: '#E11D48', is_mock: false, is_custom: true } : await createClassTypeApi(token, name);
+    if (useMockData) classTypes.push(created);
+    setAvailableClassTypes(current => [...current, created]);
     setRecurring({ ...recurring, classTypeId: created.id });
     setClassTypeQuery(created.name);
     setClassTypeDropdownOpen(false);

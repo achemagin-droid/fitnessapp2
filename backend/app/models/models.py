@@ -41,6 +41,7 @@ class ClassType(Base):
     duration_minutes = Column(Integer, nullable=False)
     max_capacity = Column(Integer, nullable=False)
     color_code = Column(String(7), default="#E11D48")
+    is_mock = Column(Boolean, nullable=False, default=False)
 
     sessions = relationship("ClassSession", back_populates="class_type")
 
