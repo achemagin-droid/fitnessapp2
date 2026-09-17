@@ -21,6 +21,16 @@ export interface ClassSession {
   start_time: string; // ISO string
   end_time: string;
   is_active: boolean;
+  is_mock?: boolean;
+}
+
+export interface RecurringSessionInput {
+  class_type_id: string;
+  trainer_id: string;
+  weekdays: number[];
+  start_time: string;
+  duration_minutes: number;
+  weeks: number;
 }
 
 export type NotificationPreference = 'telegram' | 'email' | 'none';

@@ -3,13 +3,15 @@ import { useStore } from '../../store/useStore';
 import { classTypes, trainers } from '../../data/mockData';
 import { format, parseISO, startOfWeek, addDays, isToday, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Users, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Clock, Plus } from 'lucide-react';
 import SessionDetail from './SessionDetail';
 
 export default function ScheduleBoard() {
-  const { sessions, getSessionOccupancy } = useStore();
+  const { sessions, getSessionOccupancy, addRecurringSessions } = useStore();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showRecurring, setShowRecurring] = useState(false);
+  const [recurring, setRecurring] = useState({ classTypeId: 'ct1', trainerId: 't1', weekdays: [0], startTime: '09:00', weeks: 8 });
 
   const weekDays = useMemo(() => {
     const start = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -31,8 +33,22 @@ export default function ScheduleBoard() {
     );
   }
 
+  const submitRecurring = () => {
+    const type = classTypes.find(item => item.id === recurring.classTypeId);
+    if (!type || recurring.weekdays.length === 0) return;
+    const start = new Date();
+    const [hours, minutes] = recurring.startTime.split(':').map(Number);
+    start.setHours(hours, minutes, 0, 0);
+    addRecurringSessions({ class_type_id: recurring.classTypeId, trainer_id: recurring.trainerId, weekdays: recurring.weekdays, start_time: start.toISOString(), duration_minutes: type.duration_minutes, weeks: recurring.weeks });
+    setShowRecurring(false);
+  };
+
   return (
     <div className="animate-fade-in">
+      <div className="mb-6 bg-white rounded-xl border border-gray-100 p-4">
+        <div className="flex items-center justify-between"><div><h3 className="font-semibold text-gray-900">Повторяющееся занятие</h3><p className="text-xs text-gray-500">Создать занятия по выбранным дням недели</p></div><button onClick={() => setShowRecurring(!showRecurring)} className="bg-[#E11D48] text-white rounded-lg px-3 py-2 text-sm flex items-center gap-2"><Plus className="w-4 h-4" />Добавить</button></div>
+        {showRecurring && <div className="mt-4 space-y-3"><div className="grid md:grid-cols-4 gap-3"><select className="border rounded-lg px-3 py-2" value={recurring.classTypeId} onChange={e => setRecurring({ ...recurring, classTypeId: e.target.value })}>{classTypes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><select className="border rounded-lg px-3 py-2" value={recurring.trainerId} onChange={e => setRecurring({ ...recurring, trainerId: e.target.value })}>{trainers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input type="time" className="border rounded-lg px-3 py-2" value={recurring.startTime} onChange={e => setRecurring({ ...recurring, startTime: e.target.value })} /><input type="number" min="1" max="52" className="border rounded-lg px-3 py-2" value={recurring.weeks} onChange={e => setRecurring({ ...recurring, weeks: Number(e.target.value) })} /></div><div className="flex flex-wrap gap-2">{['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((label, index) => <label key={label} className="border rounded-lg px-3 py-2 text-sm"><input type="checkbox" className="mr-2" checked={recurring.weekdays.includes(index)} onChange={e => setRecurring({ ...recurring, weekdays: e.target.checked ? [...recurring.weekdays, index] : recurring.weekdays.filter(day => day !== index) })} />{label}</label>)}</div><button onClick={submitRecurring} disabled={!recurring.weekdays.length} className="bg-gray-900 text-white rounded-lg px-3 py-2 disabled:opacity-40">Создать занятия</button></div>}
+      </div>
       {/* Week Navigation */}
       <div className="flex items-center justify-between mb-6">
         <button

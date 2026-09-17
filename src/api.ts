@@ -25,6 +25,7 @@ export const login = (username: string, password: string) =>
   request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
 export const logout = () => request<{ ok: boolean }>('/auth/logout', { method: 'POST' });
 export const getMe = () => request<{ username: string }>('/auth/me');
+export const lookupClient = (phone: string) => request<ClientLookup>(`/clients/lookup?phone=${encodeURIComponent(phone)}`);
 
 export const getTrainers = (token?: string) => request<{ trainers: TrainerRecord[] }>('/auth/trainers', {}, token);
 export const createTrainer = (token: string | undefined, data: TrainerCreate) =>
@@ -53,4 +54,9 @@ export interface NotificationSettingsInput {
   smtp_user: string;
   smtp_password: string;
   smtp_from: string;
+}
+export interface ClientLookup {
+  found: boolean;
+  client?: { id: string; first_name: string; last_name: string; phone: string; email?: string; telegram_id?: string; notification_preference: 'telegram' | 'email' | 'none' };
+  pass?: { remaining: number; total: number; end_date: string } | null;
 }

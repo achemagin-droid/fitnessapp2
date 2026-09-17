@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Client, Booking, Pass, ClassSession, BookingStatus } from '../types';
+import { Client, Booking, Pass, ClassSession, BookingStatus, RecurringSessionInput } from '../types';
 import { initialClients, initialBookings, initialPasses, sessions, classTypes } from '../data/mockData';
 
 interface AppState {
@@ -9,6 +9,9 @@ interface AppState {
   bookings: Booking[];
   passes: Pass[];
   sessions: ClassSession[];
+  useMockData: boolean;
+  setMockData: (enabled: boolean) => void;
+  addRecurringSessions: (input: RecurringSessionInput) => void;
   
   // Client actions
   addClient: (client: Client) => void;
@@ -39,6 +42,23 @@ export const useStore = create<AppState>()(
       bookings: initialBookings,
       passes: initialPasses,
       sessions: sessions,
+      useMockData: true,
+      setMockData: (enabled) => set({ useMockData: enabled, sessions: enabled ? sessions : [] }),
+      addRecurringSessions: (input) => {
+        const generated: ClassSession[] = [];
+        const start = new Date(input.start_time);
+        const end = new Date(start);
+        end.setDate(end.getDate() + input.weeks * 7);
+        for (const cursor = new Date(start); cursor < end; cursor.setDate(cursor.getDate() + 1)) {
+          const mondayIndex = cursor.getDay() === 0 ? 6 : cursor.getDay() - 1;
+          if (!input.weekdays.includes(mondayIndex)) continue;
+          const itemStart = new Date(cursor);
+          itemStart.setHours(start.getHours(), start.getMinutes(), 0, 0);
+          const itemEnd = new Date(itemStart.getTime() + input.duration_minutes * 60000);
+          generated.push({ id: `rec-${itemStart.getTime()}`, class_type_id: input.class_type_id, trainer_id: input.trainer_id, start_time: itemStart.toISOString(), end_time: itemEnd.toISOString(), is_active: true, is_mock: true });
+        }
+        set(state => ({ sessions: [...state.sessions, ...generated] }));
+      },
       
       addClient: (client) => set((state) => ({ clients: [...state.clients, client] })),
       

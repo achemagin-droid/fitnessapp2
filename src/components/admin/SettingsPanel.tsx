@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDown, Plus, Save, Trash2 } from 'lucide-react';
 import { createTrainer, deleteTrainer, getNotificationSettings, getTrainers, saveNotificationSettings, NotificationSettings, TrainerRecord } from '../../api';
+import { useStore } from '../../store/useStore';
 
 export default function SettingsPanel({ token }: { token: string }) {
+  const { useMockData, setMockData } = useStore();
   const [advanced, setAdvanced] = useState(false);
   const [trainers, setTrainers] = useState<TrainerRecord[]>([]);
   const [notification, setNotification] = useState<NotificationSettings>({ telegram_bot_token_configured: false, smtp_host: '', smtp_port: 465, smtp_user: '', smtp_password_configured: false, smtp_from: '' });
@@ -35,6 +37,7 @@ export default function SettingsPanel({ token }: { token: string }) {
 
   return <div className="space-y-6 animate-fade-in">
     <div><h2 className="text-xl font-bold text-gray-900">Настройки</h2><p className="text-sm text-gray-500">Тренеры и параметры уведомлений</p></div>
+    <section className="bg-white rounded-xl border border-gray-100 p-5"><div className="flex items-center justify-between"><div><h3 className="font-semibold text-gray-900">Демонстрационные данные</h3><p className="text-sm text-gray-500">Показывать mock-расписание, клиентов и записи</p></div><button type="button" onClick={() => setMockData(!useMockData)} className={`relative w-12 h-6 rounded-full transition-colors ${useMockData ? 'bg-[#E11D48]' : 'bg-gray-300'}`}><span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${useMockData ? 'translate-x-7' : 'translate-x-1'}`} /></button></div><p className="text-xs text-gray-400 mt-2">Сейчас: {useMockData ? 'включены' : 'выключены'}</p></section>
     <section className="bg-white rounded-xl border border-gray-100 p-5">
       <h3 className="font-semibold text-gray-900 mb-4">Тренеры</h3>
       <div className="space-y-2 mb-5">{trainers.map(t => <div key={t.id} className="flex items-center justify-between border rounded-lg px-3 py-2"><div><b>{t.name}</b><span className="text-xs text-gray-500 ml-2">логин: {t.username}</span></div><button onClick={() => remove(t.id)} className="text-red-500 p-2" title="Удалить доступ"><Trash2 className="w-4 h-4" /></button></div>)}</div>
