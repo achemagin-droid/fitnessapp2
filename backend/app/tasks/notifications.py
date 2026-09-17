@@ -23,6 +23,21 @@ celery_app.conf.beat_schedule = {
 }
 
 
+def notification_config(db):
+    """Берёт настройки из БД, сохраняя fallback на переменные окружения."""
+    from app.models.auth import AppSetting
+
+    values = {row.key: row.value for row in db.query(AppSetting).all()}
+    return {
+        "telegram_bot_token": values.get("telegram_bot_token") or settings.telegram_bot_token,
+        "smtp_host": values.get("smtp_host") or settings.smtp_host,
+        "smtp_port": int(values.get("smtp_port") or settings.smtp_port),
+        "smtp_user": values.get("smtp_user") or settings.smtp_user,
+        "smtp_password": values.get("smtp_password") or settings.smtp_password,
+        "smtp_from": values.get("smtp_from") or settings.smtp_from,
+    }
+
+
 @celery_app.task(name="app.tasks.notifications.send_upcoming_reminders")
 def send_upcoming_reminders():
     """Отправить напоминания за 2 часа до начала тренировки."""
@@ -78,14 +93,19 @@ def send_telegram(chat_id: str, message: str):
     """Отправить сообщение через Telegram Bot API."""
     import httpx
 
-    if not settings.telegram_bot_token:
+    from app.core.database import SessionLocal
+
+    db = SessionLocal()
+    config = notification_config(db)
+    db.close()
+    if not config["telegram_bot_token"]:
         print(f"[Telegram] Нет токена. Сообщение для {chat_id}: {message}")
         return
 
     try:
         with httpx.Client() as client:
             response = client.post(
-                f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage",
+                f"https://api.telegram.org/bot{config['telegram_bot_token']}/sendMessage",
                 json={
                     "chat_id": chat_id,
                     "text": message,
@@ -107,22 +127,27 @@ def send_email(to_email: str, subject: str, body: str):
 
     import aiosmtplib
 
-    if not settings.smtp_host:
+    from app.core.database import SessionLocal
+
+    db = SessionLocal()
+    config = notification_config(db)
+    db.close()
+    if not config["smtp_host"]:
         print(f"[Email] Нет SMTP. Сообщение для {to_email}: {body}")
         return
 
     msg = MIMEText(body, "plain", "utf-8")
     msg["Subject"] = subject
-    msg["From"] = settings.smtp_from
+    msg["From"] = config["smtp_from"]
     msg["To"] = to_email
 
     async def _send():
         await aiosmtplib.send(
             msg,
-            hostname=settings.smtp_host,
-            port=settings.smtp_port,
-            username=settings.smtp_user,
-            password=settings.smtp_password,
+            hostname=config["smtp_host"],
+            port=config["smtp_port"],
+            username=config["smtp_user"],
+            password=config["smtp_password"],
             use_tls=True
         )
 

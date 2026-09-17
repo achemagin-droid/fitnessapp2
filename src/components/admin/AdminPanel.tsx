@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { Calendar, LayoutGrid, Users, Bell, Sparkles } from 'lucide-react';
+import { Calendar, Users, Bell, Settings, Sparkles, LogOut } from 'lucide-react';
 import ScheduleBoard from './ScheduleBoard';
 import ClientCRM from './ClientCRM';
 import NotificationsPanel from './NotificationsPanel';
+import SettingsPanel from './SettingsPanel';
 
-type AdminTab = 'schedule' | 'crm' | 'notifications';
+type AdminTab = 'schedule' | 'crm' | 'notifications' | 'settings';
 
-export default function AdminPanel() {
+export default function AdminPanel({ token, username, onLogout }: { token: string; username: string; onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<AdminTab>('schedule');
 
   const tabs = [
     { id: 'schedule' as const, label: 'Расписание', icon: Calendar },
     { id: 'crm' as const, label: 'Клиенты', icon: Users },
     { id: 'notifications' as const, label: 'Уведомления', icon: Bell },
+    { id: 'settings' as const, label: 'Настройки', icon: Settings },
   ];
 
   return (
@@ -33,7 +35,8 @@ export default function AdminPanel() {
             <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium text-[#E11D48]">М</span>
             </div>
-            <span className="text-sm font-medium text-gray-700 hidden sm:block">Марта</span>
+            <span className="text-sm font-medium text-gray-700 hidden sm:block">{username}</span>
+            <button onClick={onLogout} className="p-2 text-gray-500 hover:text-gray-900" title="Выйти"><LogOut className="w-4 h-4" /></button>
           </div>
         </div>
       </header>
@@ -68,6 +71,7 @@ export default function AdminPanel() {
         {activeTab === 'schedule' && <ScheduleBoard />}
         {activeTab === 'crm' && <ClientCRM />}
         {activeTab === 'notifications' && <NotificationsPanel />}
+        {activeTab === 'settings' && <SettingsPanel token={token} />}
       </main>
     </div>
   );

@@ -2,23 +2,17 @@
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.api.routes.auth import verify_admin
 from app.core.database import get_db
 from app.models.models import Booking, ClassSession, Client
 from app.services.booking_service import update_booking_status
 from app.services.pass_service import create_pass
 
 router = APIRouter()
-
-
-def verify_admin(authorization: str = Header(None)):
-    """Проверка админского токена."""
-    if not authorization or authorization != f"Bearer {settings.admin_password}":
-        raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 @router.get("/sessions/week")
